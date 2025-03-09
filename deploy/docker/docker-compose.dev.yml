@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  data-service:
+    build: 
+      context: ../../
+      dockerfile: services/data-service/Dockerfile
+    cpu_count: 2
+    mem_limit: 2g
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ../../:/app
+    ports:
+      - "3001:3001"
+
+  signal-service:
+    build: 
+      context: ../../
+      dockerfile: services/signal-service/Dockerfile
+    cpu_count: 2
+    mem_limit: 2g
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ../../:/app
+    ports:
+      - "3002:3002"
+
+  scoring-service:
+    build: 
+      context: ../../
+      dockerfile: services/scoring-service/Dockerfile
+    cpu_count: 2
+    mem_limit: 2g
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ../../:/app
+    ports:
+      - "3003:3003"
+
+  agent-engine:
+    build: 
+      context: ../../
+      dockerfile: services/agent-engine/Dockerfile
+    cpu_count: 2
+    mem_limit: 4g
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ../../:/app
+    ports:
+      - "3004:3004"
+
+  redis:
+    image: redis:6.2
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+
+  mongodb:
+    image: mongo:5.0
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=secret
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  postgres:
+    image: postgres:14
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=liqpro
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  mongodb_data:
+  postgres_data: 

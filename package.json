@@ -1,0 +1,41 @@
+{
+  "name": "liqpro-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "services/*",
+    "libs/*"
+  ],
+  "scripts": {
+    "dev": "docker-compose -f deploy/docker/docker-compose.dev.yml up",
+    "dev:build": "docker-compose -f deploy/docker/docker-compose.dev.yml up --build",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "npm run format --workspaces --if-present",
+    "format:check": "prettier --check \"**/*.{ts,json,md}\"",
+    "test": "npm run test --workspaces --if-present",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^17.0.0",
+    "@commitlint/config-conventional": "^17.0.0",
+    "@types/jest": "^29.0.0",
+    "@types/node": "^16.0.0",
+    "@typescript-eslint/eslint-plugin": "5.62.0",
+    "@typescript-eslint/parser": "5.62.0",
+    "eslint": "8.57.0",
+    "eslint-config-prettier": "8.10.0",
+    "eslint-plugin-prettier": "4.2.1",
+    "husky": "^8.0.0",
+    "jest": "^29.0.0",
+    "lint-staged": "^13.0.0",
+    "prettier": "3.2.5",
+    "ts-jest": "^29.0.0",
+    "typescript": "5.3.3"
+  },
+  "lint-staged": {
+    "*.ts": "eslint --fix",
+    "*.{json,md}": "prettier --write"
+  }
+}
