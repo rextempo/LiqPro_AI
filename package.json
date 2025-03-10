@@ -16,7 +16,8 @@
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "npm run format --workspaces --if-present",
     "format:check": "prettier --check \"**/*.{ts,json,md}\"",
-    "test": "npm run test --workspaces --if-present",
+    "test": "npm run test:coverage --workspaces --if-present",
+    "test:coverage": "npm run test:coverage --workspaces --if-present",
     "prepare": "husky install"
   },
   "devDependencies": {
