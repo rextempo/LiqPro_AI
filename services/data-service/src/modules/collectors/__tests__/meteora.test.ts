@@ -1,3 +1,46 @@
+// 模拟@meteora-ag/dlmm模块
+jest.mock('@meteora-ag/dlmm', () => {
+  return {
+    DLMM: jest.fn().mockImplementation(() => ({
+      getPoolInfo: jest.fn().mockResolvedValue({
+        price: 100.5,
+        binStep: 10,
+        totalLiquidity: {
+          toString: () => '1000000'
+        }
+      }),
+      getAllPools: jest.fn().mockResolvedValue([
+        { toString: () => '8HoQnePLqPj4M7PUDzfw8e3Ymdwgc7NLGnaTUapubyvu' }
+      ]),
+      getBinArrays: jest.fn().mockResolvedValue([
+        {
+          publicKey: { toString: () => 'bin-array-1' },
+          bins: [
+            {
+              index: 0,
+              amountX: { toString: () => '100' },
+              amountY: { toString: () => '200' },
+              liquiditySupply: { toString: () => '300' }
+            }
+          ]
+        }
+      ])
+    }))
+  };
+});
+
+// 模拟@solana/web3.js模块
+jest.mock('@solana/web3.js', () => {
+  return {
+    Connection: jest.fn().mockImplementation(() => ({
+      getLatestBlockhash: jest.fn().mockResolvedValue({})
+    })),
+    PublicKey: jest.fn().mockImplementation((address) => ({
+      toString: () => address
+    }))
+  };
+});
+
 import { MeteoraPoolCollector } from '../meteora';
 
 describe('MeteoraPoolCollector', () => {

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "tsc",
-    "test": "jest --passWithNoTests",
+    "test": "jest --passWithNoTests --forceExit",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "test:simple": "jest --no-cache --testTimeout=10000 --detectOpenHandles"
