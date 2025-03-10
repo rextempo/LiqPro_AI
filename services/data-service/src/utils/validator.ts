@@ -25,10 +25,10 @@ export class Validator {
     if (value === undefined || value === null || value === '') {
       return {
         isValid: false,
-        errors: [`${fieldName} is required`]
+        errors: [`${fieldName} is required`],
       };
     }
-    
+
     return { isValid: true };
   }
 
@@ -42,10 +42,10 @@ export class Validator {
     if (typeof value !== 'string') {
       return {
         isValid: false,
-        errors: [`${fieldName} must be a string`]
+        errors: [`${fieldName} must be a string`],
       };
     }
-    
+
     return { isValid: true };
   }
 
@@ -59,10 +59,10 @@ export class Validator {
     if (typeof value !== 'number' || isNaN(value)) {
       return {
         isValid: false,
-        errors: [`${fieldName} must be a number`]
+        errors: [`${fieldName} must be a number`],
       };
     }
-    
+
     return { isValid: true };
   }
 
@@ -76,10 +76,10 @@ export class Validator {
     if (typeof value !== 'boolean') {
       return {
         isValid: false,
-        errors: [`${fieldName} must be a boolean`]
+        errors: [`${fieldName} must be a boolean`],
       };
     }
-    
+
     return { isValid: true };
   }
 
@@ -93,10 +93,10 @@ export class Validator {
     if (!Array.isArray(value)) {
       return {
         isValid: false,
-        errors: [`${fieldName} must be an array`]
+        errors: [`${fieldName} must be an array`],
       };
     }
-    
+
     return { isValid: true };
   }
 
@@ -110,10 +110,10 @@ export class Validator {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
       return {
         isValid: false,
-        errors: [`${fieldName} must be an object`]
+        errors: [`${fieldName} must be an object`],
       };
     }
-    
+
     return { isValid: true };
   }
 
@@ -129,16 +129,16 @@ export class Validator {
     if (!stringResult.isValid) {
       return stringResult;
     }
-    
+
     // Check if it's a valid base58 string of the right length
     const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
     if (!base58Regex.test(value)) {
       return {
         isValid: false,
-        errors: [`${fieldName} must be a valid Solana address`]
+        errors: [`${fieldName} must be a valid Solana address`],
       };
     }
-    
+
     return { isValid: true };
   }
 
@@ -154,15 +154,15 @@ export class Validator {
     if (!numberResult.isValid) {
       return numberResult;
     }
-    
+
     // Check if it's a valid timestamp (positive number)
     if (value < 0) {
       return {
         isValid: false,
-        errors: [`${fieldName} must be a valid timestamp (positive number)`]
+        errors: [`${fieldName} must be a valid timestamp (positive number)`],
       };
     }
-    
+
     return { isValid: true };
   }
 
@@ -180,15 +180,15 @@ export class Validator {
     if (!numberResult.isValid) {
       return numberResult;
     }
-    
+
     // Check if it's within the range
     if (value < min || value > max) {
       return {
         isValid: false,
-        errors: [`${fieldName} must be between ${min} and ${max}`]
+        errors: [`${fieldName} must be between ${min} and ${max}`],
       };
     }
-    
+
     return { isValid: true };
   }
 
@@ -205,15 +205,15 @@ export class Validator {
     if (!stringResult.isValid) {
       return stringResult;
     }
-    
+
     // Check if it's at least the minimum length
     if (value.length < minLength) {
       return {
         isValid: false,
-        errors: [`${fieldName} must be at least ${minLength} characters long`]
+        errors: [`${fieldName} must be at least ${minLength} characters long`],
       };
     }
-    
+
     return { isValid: true };
   }
 
@@ -230,15 +230,15 @@ export class Validator {
     if (!stringResult.isValid) {
       return stringResult;
     }
-    
+
     // Check if it's at most the maximum length
     if (value.length > maxLength) {
       return {
         isValid: false,
-        errors: [`${fieldName} must be at most ${maxLength} characters long`]
+        errors: [`${fieldName} must be at most ${maxLength} characters long`],
       };
     }
-    
+
     return { isValid: true };
   }
 
@@ -250,21 +250,26 @@ export class Validator {
    * @param errorMessage Custom error message
    * @returns Validation result
    */
-  static matches(value: string, pattern: RegExp, fieldName: string, errorMessage?: string): ValidationResult {
+  static matches(
+    value: string,
+    pattern: RegExp,
+    fieldName: string,
+    errorMessage?: string
+  ): ValidationResult {
     // First check if it's a string
     const stringResult = Validator.isString(value, fieldName);
     if (!stringResult.isValid) {
       return stringResult;
     }
-    
+
     // Check if it matches the pattern
     if (!pattern.test(value)) {
       return {
         isValid: false,
-        errors: [errorMessage || `${fieldName} has an invalid format`]
+        errors: [errorMessage || `${fieldName} has an invalid format`],
       };
     }
-    
+
     return { isValid: true };
   }
 
@@ -274,15 +279,18 @@ export class Validator {
    * @param schema Validation schema
    * @returns Validation result
    */
-  static validateBody(body: any, schema: Record<string, (value: any) => ValidationResult>): ValidationResult {
+  static validateBody(
+    body: any,
+    schema: Record<string, (value: any) => ValidationResult>
+  ): ValidationResult {
     const errors: string[] = [];
-    
+
     // Check if body is an object
     if (typeof body !== 'object' || body === null) {
       errors.push('Request body must be an object');
       return { isValid: false, errors };
     }
-    
+
     // Validate each field according to the schema
     for (const [field, validator] of Object.entries(schema)) {
       const result = validator(body[field]);
@@ -290,10 +298,10 @@ export class Validator {
         errors.push(...result.errors);
       }
     }
-    
+
     return {
       isValid: errors.length === 0,
-      errors: errors.length > 0 ? errors : undefined
+      errors: errors.length > 0 ? errors : undefined,
     };
   }
 
@@ -302,7 +310,10 @@ export class Validator {
    * @param body Request body
    * @param schema Validation schema
    */
-  static validateBodyOrThrow(body: any, schema: Record<string, (value: any) => ValidationResult>): void {
+  static validateBodyOrThrow(
+    body: any,
+    schema: Record<string, (value: any) => ValidationResult>
+  ): void {
     const result = Validator.validateBody(body, schema);
     if (!result.isValid && result.errors) {
       logger.warn('Validation failed', { errors: result.errors, body });
@@ -316,15 +327,18 @@ export class Validator {
    * @param schema Validation schema
    * @returns Validation result
    */
-  static validateQuery(query: any, schema: Record<string, (value: any) => ValidationResult>): ValidationResult {
+  static validateQuery(
+    query: any,
+    schema: Record<string, (value: any) => ValidationResult>
+  ): ValidationResult {
     const errors: string[] = [];
-    
+
     // Check if query is an object
     if (typeof query !== 'object' || query === null) {
       errors.push('Request query must be an object');
       return { isValid: false, errors };
     }
-    
+
     // Validate each field according to the schema
     for (const [field, validator] of Object.entries(schema)) {
       const result = validator(query[field]);
@@ -332,10 +346,10 @@ export class Validator {
         errors.push(...result.errors);
       }
     }
-    
+
     return {
       isValid: errors.length === 0,
-      errors: errors.length > 0 ? errors : undefined
+      errors: errors.length > 0 ? errors : undefined,
     };
   }
 
@@ -344,7 +358,10 @@ export class Validator {
    * @param query Request query
    * @param schema Validation schema
    */
-  static validateQueryOrThrow(query: any, schema: Record<string, (value: any) => ValidationResult>): void {
+  static validateQueryOrThrow(
+    query: any,
+    schema: Record<string, (value: any) => ValidationResult>
+  ): void {
     const result = Validator.validateQuery(query, schema);
     if (!result.isValid && result.errors) {
       logger.warn('Validation failed', { errors: result.errors, query });
@@ -358,15 +375,18 @@ export class Validator {
    * @param schema Validation schema
    * @returns Validation result
    */
-  static validateParams(params: any, schema: Record<string, (value: any) => ValidationResult>): ValidationResult {
+  static validateParams(
+    params: any,
+    schema: Record<string, (value: any) => ValidationResult>
+  ): ValidationResult {
     const errors: string[] = [];
-    
+
     // Check if params is an object
     if (typeof params !== 'object' || params === null) {
       errors.push('Request params must be an object');
       return { isValid: false, errors };
     }
-    
+
     // Validate each field according to the schema
     for (const [field, validator] of Object.entries(schema)) {
       const result = validator(params[field]);
@@ -374,10 +394,10 @@ export class Validator {
         errors.push(...result.errors);
       }
     }
-    
+
     return {
       isValid: errors.length === 0,
-      errors: errors.length > 0 ? errors : undefined
+      errors: errors.length > 0 ? errors : undefined,
     };
   }
 
@@ -386,11 +406,14 @@ export class Validator {
    * @param params Request params
    * @param schema Validation schema
    */
-  static validateParamsOrThrow(params: any, schema: Record<string, (value: any) => ValidationResult>): void {
+  static validateParamsOrThrow(
+    params: any,
+    schema: Record<string, (value: any) => ValidationResult>
+  ): void {
     const result = Validator.validateParams(params, schema);
     if (!result.isValid && result.errors) {
       logger.warn('Validation failed', { errors: result.errors, params });
       throw ErrorHandler.validationError('Validation failed', { errors: result.errors });
     }
   }
-} 
+}

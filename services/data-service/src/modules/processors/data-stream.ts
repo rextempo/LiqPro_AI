@@ -11,7 +11,7 @@ export enum StreamType {
   POOL_DATA = 'pool_data',
   MARKET_PRICE = 'market_price',
   WHALE_ACTIVITY = 'whale_activity',
-  SYSTEM_METRICS = 'system_metrics'
+  SYSTEM_METRICS = 'system_metrics',
 }
 
 /**
@@ -44,17 +44,17 @@ export class DataStreamManager {
   private buffers: Map<string, StreamEvent[]> = new Map();
   private bufferSize: number = 100;
   private bufferTTL: number = 60 * 60 * 1000; // 1 hour in milliseconds
-  
+
   /**
    * Create a new Data Stream Manager
    */
   constructor() {
     // Set maximum number of listeners to avoid memory leaks
     this.emitter.setMaxListeners(100);
-    
+
     // Start buffer cleanup
     setInterval(() => this.cleanupBuffers(), 15 * 60 * 1000); // Every 15 minutes
-    
+
     logger.info('Data Stream Manager initialized');
   }
 
@@ -69,16 +69,16 @@ export class DataStreamManager {
       type,
       topic,
       timestamp: Date.now(),
-      data
+      data,
     };
-    
+
     // Emit event
     const eventKey = `${type}:${topic}`;
     this.emitter.emit(eventKey, event);
-    
+
     // Buffer event
     this.bufferEvent(eventKey, event);
-    
+
     logger.debug(`Published event to ${eventKey}`, { timestamp: event.timestamp });
   }
 
@@ -98,29 +98,33 @@ export class DataStreamManager {
    * @param callback Callback function
    * @returns Subscription ID
    */
-  subscribe<T = any>(type: StreamType, topic: string, callback: (event: StreamEvent<T>) => void): string {
+  subscribe<T = any>(
+    type: StreamType,
+    topic: string,
+    callback: (event: StreamEvent<T>) => void
+  ): string {
     const subscriptionId = `${type}:${topic}:${Date.now()}:${Math.random().toString(36).substring(2, 9)}`;
     const eventKey = `${type}:${topic}`;
-    
+
     // Create subscription
     const subscription: StreamSubscription = {
       id: subscriptionId,
       type,
       topic,
-      callback
+      callback,
     };
-    
+
     // Store subscription
     this.subscriptions.set(subscriptionId, subscription);
-    
+
     // Add listener
     this.emitter.on(eventKey, callback);
-    
+
     // Send buffered events
     this.sendBufferedEvents(eventKey, callback);
-    
+
     logger.info(`Subscribed to ${eventKey} with ID ${subscriptionId}`);
-    
+
     return subscriptionId;
   }
 
@@ -130,17 +134,17 @@ export class DataStreamManager {
    */
   unsubscribe(subscriptionId: string): void {
     const subscription = this.subscriptions.get(subscriptionId);
-    
+
     if (subscription) {
       const { type, topic, callback } = subscription;
       const eventKey = `${type}:${topic}`;
-      
+
       // Remove listener
       this.emitter.off(eventKey, callback);
-      
+
       // Remove subscription
       this.subscriptions.delete(subscriptionId);
-      
+
       logger.info(`Unsubscribed from ${eventKey} with ID ${subscriptionId}`);
     }
   }
@@ -155,12 +159,12 @@ export class DataStreamManager {
     if (!this.buffers.has(key)) {
       this.buffers.set(key, []);
     }
-    
+
     const buffer = this.buffers.get(key)!;
-    
+
     // Add event to buffer
     buffer.push(event);
-    
+
     // Limit buffer size
     if (buffer.length > this.bufferSize) {
       buffer.shift(); // Remove oldest event
@@ -174,7 +178,7 @@ export class DataStreamManager {
    */
   private sendBufferedEvents(key: string, callback: (event: StreamEvent) => void): void {
     const buffer = this.buffers.get(key) || [];
-    
+
     // Send buffered events
     for (const event of buffer) {
       try {
@@ -190,18 +194,18 @@ export class DataStreamManager {
    */
   private cleanupBuffers(): void {
     const now = Date.now();
-    
+
     // Check each buffer
     for (const [key, buffer] of this.buffers.entries()) {
       // Remove old events
       const newBuffer = buffer.filter(event => now - event.timestamp <= this.bufferTTL);
-      
+
       // Update buffer
       if (newBuffer.length < buffer.length) {
         this.buffers.set(key, newBuffer);
         logger.debug(`Cleaned up ${buffer.length - newBuffer.length} old events from ${key}`);
       }
-      
+
       // Remove empty buffers
       if (newBuffer.length === 0) {
         this.buffers.delete(key);
@@ -226,7 +230,7 @@ export class DataStreamManager {
    */
   getStreamSubscriptions(type: StreamType, topic: string): StreamSubscription[] {
     const eventKey = `${type}:${topic}`;
-    
+
     return Array.from(this.subscriptions.values()).filter(
       sub => `${sub.type}:${sub.topic}` === eventKey
     );
@@ -238,7 +242,7 @@ export class DataStreamManager {
    */
   setBufferSize(size: number): void {
     this.bufferSize = size;
-    
+
     // Trim existing buffers
     for (const [key, buffer] of this.buffers.entries()) {
       if (buffer.length > size) {
@@ -246,7 +250,7 @@ export class DataStreamManager {
         logger.debug(`Trimmed buffer for ${key} to ${size} events`);
       }
     }
-    
+
     logger.info(`Set buffer size to ${size}`);
   }
 
@@ -258,4 +262,4 @@ export class DataStreamManager {
     this.bufferTTL = ttlMs;
     logger.info(`Set buffer TTL to ${ttlMs}ms`);
   }
-} 
+}

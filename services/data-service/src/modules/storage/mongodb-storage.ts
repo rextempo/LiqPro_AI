@@ -48,7 +48,7 @@ export class MongoDBStorage implements DataStorage {
     events: null,
     tokenPrices: null,
     tokenMetadata: null,
-    whaleActivities: null
+    whaleActivities: null,
   };
   private config: MongoDBStorageConfig;
   private isConnected: boolean = false;
@@ -60,10 +60,10 @@ export class MongoDBStorage implements DataStorage {
   constructor(config: MongoDBStorageConfig) {
     this.config = config;
     this.client = new MongoClient(config.uri);
-    
+
     logger.info('MongoDB storage initialized', {
       uri: config.uri,
-      dbName: config.dbName
+      dbName: config.dbName,
     });
   }
 
@@ -78,23 +78,25 @@ export class MongoDBStorage implements DataStorage {
 
     try {
       logger.info('Connecting to MongoDB...');
-      
+
       await this.client.connect();
       this.db = this.client.db(this.config.dbName);
-      
+
       // Initialize collections
       this.collections.poolData = this.db.collection(this.config.collections.poolData);
       this.collections.poolMetadata = this.db.collection(this.config.collections.poolMetadata);
       this.collections.events = this.db.collection(this.config.collections.events);
       this.collections.tokenPrices = this.db.collection(this.config.collections.tokenPrices);
       this.collections.tokenMetadata = this.db.collection(this.config.collections.tokenMetadata);
-      this.collections.whaleActivities = this.db.collection(this.config.collections.whaleActivities);
-      
+      this.collections.whaleActivities = this.db.collection(
+        this.config.collections.whaleActivities
+      );
+
       // Create indexes if enabled
       if (this.config.indexes?.enabled) {
         await this.createIndexes();
       }
-      
+
       this.isConnected = true;
       logger.info('Connected to MongoDB');
     } catch (error: any) {
@@ -114,9 +116,9 @@ export class MongoDBStorage implements DataStorage {
 
     try {
       logger.info('Disconnecting from MongoDB...');
-      
+
       await this.client.close();
-      
+
       this.isConnected = false;
       this.db = null;
       this.collections.poolData = null;
@@ -125,7 +127,7 @@ export class MongoDBStorage implements DataStorage {
       this.collections.tokenPrices = null;
       this.collections.tokenMetadata = null;
       this.collections.whaleActivities = null;
-      
+
       logger.info('Disconnected from MongoDB');
     } catch (error: any) {
       logger.error('Failed to disconnect from MongoDB', { error });
@@ -139,23 +141,23 @@ export class MongoDBStorage implements DataStorage {
    */
   async storePoolData(data: PoolData): Promise<void> {
     await this.ensureConnected();
-    
+
     try {
       const collection = this.collections.poolData!;
-      
+
       // Add timestamp if not present
       const timestamp = data.timestamp || Math.floor(Date.now() / 1000);
       const documentId = `${data.address}-${timestamp}`;
-      
+
       // Create document without _id field, MongoDB will generate it
       const document = {
         ...data,
         timestamp,
-        documentId // Store the original ID as a field
+        documentId, // Store the original ID as a field
       };
-      
+
       await collection.insertOne(document);
-      
+
       logger.debug(`Stored pool data for ${data.address}`);
     } catch (error: any) {
       // Ignore duplicate key errors (can happen with rapid updates)
@@ -163,7 +165,7 @@ export class MongoDBStorage implements DataStorage {
         logger.debug(`Duplicate pool data for ${data.address}, skipping`);
         return;
       }
-      
+
       logger.error(`Failed to store pool data for ${data.address}`, { error });
       throw new Error(`Failed to store pool data: ${error.message}`);
     }
@@ -174,24 +176,23 @@ export class MongoDBStorage implements DataStorage {
    * @param poolAddress Pool address
    * @param metadata Pool metadata
    */
-  async storePoolMetadata(poolAddress: string, metadata: { name?: string; description?: string }): Promise<void> {
+  async storePoolMetadata(
+    poolAddress: string,
+    metadata: { name?: string; description?: string }
+  ): Promise<void> {
     await this.ensureConnected();
-    
+
     try {
       const collection = this.collections.poolMetadata!;
-      
+
       const document = {
         poolAddress,
         ...metadata,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
-      
-      await collection.updateOne(
-        { poolAddress },
-        { $set: document },
-        { upsert: true }
-      );
-      
+
+      await collection.updateOne({ poolAddress }, { $set: document }, { upsert: true });
+
       logger.debug(`Stored metadata for pool ${poolAddress}`);
     } catch (error: any) {
       logger.error(`Failed to store metadata for pool ${poolAddress}`, { error });
@@ -205,18 +206,18 @@ export class MongoDBStorage implements DataStorage {
    */
   async storeEvent(event: PoolEvent): Promise<void> {
     await this.ensureConnected();
-    
+
     try {
       const collection = this.collections.events!;
-      
+
       const document = {
         ...event,
         eventId: event.id, // Store the original ID as a field
-        timestamp: event.blockTime
+        timestamp: event.blockTime,
       };
-      
+
       await collection.insertOne(document);
-      
+
       logger.debug(`Stored event ${event.id} for pool ${event.poolAddress}`);
     } catch (error: any) {
       // Ignore duplicate key errors
@@ -224,7 +225,7 @@ export class MongoDBStorage implements DataStorage {
         logger.debug(`Duplicate event ${event.id}, skipping`);
         return;
       }
-      
+
       logger.error(`Failed to store event ${event.id}`, { error });
       throw new Error(`Failed to store event: ${error.message}`);
     }
@@ -235,26 +236,29 @@ export class MongoDBStorage implements DataStorage {
    * @param priceData Token price data
    * @param timestamp Timestamp
    */
-  async storeTokenPrices(priceData: Record<string, { price: number; source: string }>, timestamp: number): Promise<void> {
+  async storeTokenPrices(
+    priceData: Record<string, { price: number; source: string }>,
+    timestamp: number
+  ): Promise<void> {
     await this.ensureConnected();
-    
+
     try {
       const collection = this.collections.tokenPrices!;
-      
+
       const documents = Object.entries(priceData).map(([tokenMint, data]) => ({
         tokenMint,
         price: data.price,
         source: data.source,
         timestamp,
-        documentId: `${tokenMint}-${timestamp}` // Store as a field, not as _id
+        documentId: `${tokenMint}-${timestamp}`, // Store as a field, not as _id
       }));
-      
+
       if (documents.length === 0) {
         return;
       }
-      
+
       await collection.insertMany(documents);
-      
+
       logger.debug(`Stored prices for ${documents.length} tokens`);
     } catch (error: any) {
       // Ignore duplicate key errors
@@ -262,7 +266,7 @@ export class MongoDBStorage implements DataStorage {
         logger.debug('Duplicate token prices, skipping');
         return;
       }
-      
+
       logger.error('Failed to store token prices', { error });
       throw new Error(`Failed to store token prices: ${error.message}`);
     }
@@ -273,24 +277,23 @@ export class MongoDBStorage implements DataStorage {
    * @param tokenMint Token mint address
    * @param metadata Token metadata
    */
-  async storeTokenMetadata(tokenMint: string, metadata: { symbol?: string; name?: string }): Promise<void> {
+  async storeTokenMetadata(
+    tokenMint: string,
+    metadata: { symbol?: string; name?: string }
+  ): Promise<void> {
     await this.ensureConnected();
-    
+
     try {
       const collection = this.collections.tokenMetadata!;
-      
+
       const document = {
         tokenMint,
         ...metadata,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
-      
-      await collection.updateOne(
-        { tokenMint },
-        { $set: document },
-        { upsert: true }
-      );
-      
+
+      await collection.updateOne({ tokenMint }, { $set: document }, { upsert: true });
+
       logger.debug(`Stored metadata for token ${tokenMint}`);
     } catch (error: any) {
       logger.error(`Failed to store metadata for token ${tokenMint}`, { error });
@@ -304,18 +307,18 @@ export class MongoDBStorage implements DataStorage {
    */
   async storeWhaleActivity(activity: WhaleActivity): Promise<void> {
     await this.ensureConnected();
-    
+
     try {
       const collection = this.collections.whaleActivities!;
-      
+
       const document = {
         ...activity,
         activityId: activity.id, // Store the original ID as a field
-        timestamp: activity.blockTime
+        timestamp: activity.blockTime,
       };
-      
+
       await collection.insertOne(document);
-      
+
       logger.debug(`Stored whale activity ${activity.id} for pool ${activity.poolAddress}`);
     } catch (error: any) {
       // Ignore duplicate key errors
@@ -323,7 +326,7 @@ export class MongoDBStorage implements DataStorage {
         logger.debug(`Duplicate whale activity ${activity.id}, skipping`);
         return;
       }
-      
+
       logger.error(`Failed to store whale activity ${activity.id}`, { error });
       throw new Error(`Failed to store whale activity: ${error.message}`);
     }
@@ -336,22 +339,23 @@ export class MongoDBStorage implements DataStorage {
    */
   async getLatestPoolData(poolAddress: string): Promise<PoolData | null> {
     await this.ensureConnected();
-    
+
     try {
       const collection = this.collections.poolData!;
-      
-      const result = await collection.find({ address: poolAddress })
+
+      const result = await collection
+        .find({ address: poolAddress })
         .sort({ timestamp: -1 })
         .limit(1)
         .toArray();
-      
+
       if (result.length === 0) {
         return null;
       }
-      
+
       // Remove MongoDB-specific fields
       const { _id, documentId, ...poolData } = result[0];
-      
+
       return poolData as PoolData;
     } catch (error: any) {
       logger.error(`Failed to get latest data for pool ${poolAddress}`, { error });
@@ -364,23 +368,26 @@ export class MongoDBStorage implements DataStorage {
    * @param tokenMint Token mint address
    * @returns Latest token price data or null if not found
    */
-  async getLatestTokenPrice(tokenMint: string): Promise<{ price: number; source: string; timestamp: number } | null> {
+  async getLatestTokenPrice(
+    tokenMint: string
+  ): Promise<{ price: number; source: string; timestamp: number } | null> {
     await this.ensureConnected();
-    
+
     try {
       const collection = this.collections.tokenPrices!;
-      
-      const result = await collection.find({ tokenMint })
+
+      const result = await collection
+        .find({ tokenMint })
         .sort({ timestamp: -1 })
         .limit(1)
         .toArray();
-      
+
       if (result.length === 0) {
         return null;
       }
-      
+
       const { _id, tokenMint: _, documentId, ...priceData } = result[0];
-      
+
       return priceData as { price: number; source: string; timestamp: number };
     } catch (error: any) {
       logger.error(`Failed to get latest price for token ${tokenMint}`, { error });
@@ -395,19 +402,24 @@ export class MongoDBStorage implements DataStorage {
    * @param endTime End time in seconds
    * @returns Array of pool data points
    */
-  async getRawPoolData(poolAddress: string, startTime: number, endTime: number): Promise<PoolData[]> {
+  async getRawPoolData(
+    poolAddress: string,
+    startTime: number,
+    endTime: number
+  ): Promise<PoolData[]> {
     await this.ensureConnected();
-    
+
     try {
       const collection = this.collections.poolData!;
-      
-      const result = await collection.find({
-        address: poolAddress,
-        timestamp: { $gte: startTime, $lte: endTime }
-      })
+
+      const result = await collection
+        .find({
+          address: poolAddress,
+          timestamp: { $gte: startTime, $lte: endTime },
+        })
         .sort({ timestamp: 1 })
         .toArray();
-      
+
       // Remove MongoDB-specific fields
       return result.map(({ _id, documentId, ...poolData }) => poolData as PoolData);
     } catch (error: any) {
@@ -424,17 +436,17 @@ export class MongoDBStorage implements DataStorage {
    */
   async getAggregatedPoolData(poolAddress: string, timeframe: number): Promise<any> {
     await this.ensureConnected();
-    
+
     try {
       const collection = this.collections.poolData!;
-      
+
       // Calculate start time
       const endTime = Math.floor(Date.now() / 1000);
       const startTime = endTime - timeframe;
-      
+
       // Get raw data
       const rawData = await this.getRawPoolData(poolAddress, startTime, endTime);
-      
+
       if (rawData.length === 0) {
         return {
           poolAddress,
@@ -442,33 +454,37 @@ export class MongoDBStorage implements DataStorage {
           dataPoints: 0,
           startTime,
           endTime,
-          data: {}
+          data: {},
         };
       }
-      
+
       // Calculate aggregated metrics
       const firstData = rawData[0];
       const lastData = rawData[rawData.length - 1];
-      
+
       // Calculate liquidity change
       const liquidityStart = firstData.liquidity;
       const liquidityEnd = lastData.liquidity;
-      const liquidityChange = Number((Number(liquidityEnd) - Number(liquidityStart)) / Number(liquidityStart) * 100);
-      
+      const liquidityChange = Number(
+        ((Number(liquidityEnd) - Number(liquidityStart)) / Number(liquidityStart)) * 100
+      );
+
       // Calculate price change
       const priceStart = Number(firstData.sqrtPrice) ** 2;
       const priceEnd = Number(lastData.sqrtPrice) ** 2;
-      const priceChange = (priceEnd - priceStart) / priceStart * 100;
-      
+      const priceChange = ((priceEnd - priceStart) / priceStart) * 100;
+
       // Calculate token reserves change
       const tokenAReserveStart = Number(firstData.tokenA.reserve);
       const tokenAReserveEnd = Number(lastData.tokenA.reserve);
-      const tokenAReserveChange = (tokenAReserveEnd - tokenAReserveStart) / tokenAReserveStart * 100;
-      
+      const tokenAReserveChange =
+        ((tokenAReserveEnd - tokenAReserveStart) / tokenAReserveStart) * 100;
+
       const tokenBReserveStart = Number(firstData.tokenB.reserve);
       const tokenBReserveEnd = Number(lastData.tokenB.reserve);
-      const tokenBReserveChange = (tokenBReserveEnd - tokenBReserveStart) / tokenBReserveStart * 100;
-      
+      const tokenBReserveChange =
+        ((tokenBReserveEnd - tokenBReserveStart) / tokenBReserveStart) * 100;
+
       return {
         poolAddress,
         timeframe,
@@ -479,12 +495,12 @@ export class MongoDBStorage implements DataStorage {
           liquidity: {
             start: liquidityStart.toString(),
             end: liquidityEnd.toString(),
-            change: liquidityChange
+            change: liquidityChange,
           },
           price: {
             start: priceStart,
             end: priceEnd,
-            change: priceChange
+            change: priceChange,
           },
           tokenA: {
             mint: firstData.tokenA.mint,
@@ -492,8 +508,8 @@ export class MongoDBStorage implements DataStorage {
             reserve: {
               start: firstData.tokenA.reserve.toString(),
               end: lastData.tokenA.reserve.toString(),
-              change: tokenAReserveChange
-            }
+              change: tokenAReserveChange,
+            },
           },
           tokenB: {
             mint: firstData.tokenB.mint,
@@ -501,10 +517,10 @@ export class MongoDBStorage implements DataStorage {
             reserve: {
               start: firstData.tokenB.reserve.toString(),
               end: lastData.tokenB.reserve.toString(),
-              change: tokenBReserveChange
-            }
-          }
-        }
+              change: tokenBReserveChange,
+            },
+          },
+        },
       };
     } catch (error: any) {
       logger.error(`Failed to get aggregated data for pool ${poolAddress}`, { error });
@@ -525,34 +541,35 @@ export class MongoDBStorage implements DataStorage {
     endTime?: number
   ): Promise<WhaleActivity[]> {
     await this.ensureConnected();
-    
+
     try {
       const collection = this.collections.whaleActivities!;
-      
+
       // Build query
       const query: any = {};
-      
+
       if (poolAddress) {
         query.poolAddress = poolAddress;
       }
-      
+
       if (startTime || endTime) {
         query.blockTime = {};
-        
+
         if (startTime) {
           query.blockTime.$gte = startTime;
         }
-        
+
         if (endTime) {
           query.blockTime.$lte = endTime;
         }
       }
-      
-      const result = await collection.find(query)
+
+      const result = await collection
+        .find(query)
         .sort({ blockTime: -1 })
         .limit(100) // Limit to 100 activities
         .toArray();
-      
+
       // Remove MongoDB-specific fields
       return result.map(({ _id, activityId, ...activity }) => {
         // Restore the original id
@@ -570,7 +587,7 @@ export class MongoDBStorage implements DataStorage {
    */
   async getStats(): Promise<any> {
     await this.ensureConnected();
-    
+
     try {
       const stats = {
         poolData: await this.collections.poolData!.countDocuments(),
@@ -583,9 +600,9 @@ export class MongoDBStorage implements DataStorage {
         tokens: await this.collections.tokenMetadata!.countDocuments(),
         hotDataSize: 0,
         warmDataSize: 0,
-        coldDataSize: 0
+        coldDataSize: 0,
       };
-      
+
       return stats;
     } catch (error: any) {
       logger.error('Failed to get storage statistics', { error });
@@ -599,39 +616,39 @@ export class MongoDBStorage implements DataStorage {
   private async createIndexes(): Promise<void> {
     try {
       logger.info('Creating indexes...');
-      
+
       // Pool data indexes
       await this.collections.poolData!.createIndex({ address: 1, timestamp: -1 });
       await this.collections.poolData!.createIndex({ timestamp: 1 });
       await this.collections.poolData!.createIndex({ documentId: 1 }, { unique: true });
-      
+
       // Events indexes
       await this.collections.events!.createIndex({ poolAddress: 1, blockTime: -1 });
       await this.collections.events!.createIndex({ type: 1, blockTime: -1 });
       await this.collections.events!.createIndex({ blockTime: 1 });
       await this.collections.events!.createIndex({ eventId: 1 }, { unique: true });
-      
+
       // Token prices indexes
       await this.collections.tokenPrices!.createIndex({ tokenMint: 1, timestamp: -1 });
       await this.collections.tokenPrices!.createIndex({ timestamp: 1 });
       await this.collections.tokenPrices!.createIndex({ documentId: 1 }, { unique: true });
-      
+
       // Token metadata indexes
       await this.collections.tokenMetadata!.createIndex({ tokenMint: 1 }, { unique: true });
-      
+
       // Pool metadata indexes
       await this.collections.poolMetadata!.createIndex({ poolAddress: 1 }, { unique: true });
-      
+
       // Whale activities indexes
       await this.collections.whaleActivities!.createIndex({ poolAddress: 1, blockTime: -1 });
       await this.collections.whaleActivities!.createIndex({ walletAddress: 1, blockTime: -1 });
       await this.collections.whaleActivities!.createIndex({ blockTime: 1 });
       await this.collections.whaleActivities!.createIndex({ activityId: 1 }, { unique: true });
-      
+
       // TTL indexes if configured
       if (this.config.indexes?.ttl) {
         const ttl = this.config.indexes.ttl;
-        
+
         if (ttl.poolData) {
           await this.collections.poolData!.createIndex(
             { timestamp: 1 },
@@ -639,7 +656,7 @@ export class MongoDBStorage implements DataStorage {
           );
           logger.info(`Created TTL index for pool data (${ttl.poolData} seconds)`);
         }
-        
+
         if (ttl.events) {
           await this.collections.events!.createIndex(
             { blockTime: 1 },
@@ -647,7 +664,7 @@ export class MongoDBStorage implements DataStorage {
           );
           logger.info(`Created TTL index for events (${ttl.events} seconds)`);
         }
-        
+
         if (ttl.tokenPrices) {
           await this.collections.tokenPrices!.createIndex(
             { timestamp: 1 },
@@ -656,7 +673,7 @@ export class MongoDBStorage implements DataStorage {
           logger.info(`Created TTL index for token prices (${ttl.tokenPrices} seconds)`);
         }
       }
-      
+
       logger.info('Indexes created');
     } catch (error: any) {
       logger.error('Failed to create indexes', { error });
@@ -672,4 +689,4 @@ export class MongoDBStorage implements DataStorage {
       await this.connect();
     }
   }
-} 
+}

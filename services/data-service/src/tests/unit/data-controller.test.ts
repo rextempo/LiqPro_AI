@@ -16,8 +16,8 @@ jest.mock('@liqpro/monitoring', () => ({
     info: jest.fn(),
     error: jest.fn(),
     debug: jest.fn(),
-    warn: jest.fn()
-  })
+    warn: jest.fn(),
+  }),
 }));
 
 describe('DataController', () => {
@@ -42,7 +42,7 @@ describe('DataController', () => {
       getRawPoolData: jest.fn(),
       getAggregatedPoolData: jest.fn(),
       getWhaleActivities: jest.fn(),
-      getStats: jest.fn()
+      getStats: jest.fn(),
     } as unknown as jest.Mocked<DataStorage>;
 
     // Reset mocks
@@ -57,14 +57,14 @@ describe('DataController', () => {
       stop: jest.fn(),
       trackPool: jest.fn(),
       untrackPool: jest.fn(),
-      getTrackedPools: jest.fn().mockReturnValue(['pool1', 'pool2'])
+      getTrackedPools: jest.fn().mockReturnValue(['pool1', 'pool2']),
     } as unknown as jest.Mocked<PoolDataCollector>;
 
     mockEventCollector = {
       start: jest.fn(),
       stop: jest.fn(),
       trackPool: jest.fn(),
-      untrackPool: jest.fn()
+      untrackPool: jest.fn(),
     } as unknown as jest.Mocked<EventCollector>;
 
     mockMarketPriceCollector = {
@@ -72,14 +72,14 @@ describe('DataController', () => {
       stop: jest.fn(),
       addToken: jest.fn(),
       removeToken: jest.fn(),
-      getTrackedTokens: jest.fn().mockReturnValue(['token1', 'token2'])
+      getTrackedTokens: jest.fn().mockReturnValue(['token1', 'token2']),
     } as unknown as jest.Mocked<MarketPriceCollector>;
 
     mockWhaleActivityCollector = {
       start: jest.fn(),
       stop: jest.fn(),
       trackPool: jest.fn(),
-      untrackPool: jest.fn()
+      untrackPool: jest.fn(),
     } as unknown as jest.Mocked<WhaleActivityCollector>;
 
     // Setup constructor mocks
@@ -96,14 +96,14 @@ describe('DataController', () => {
       collectionIntervals: {
         poolData: 60000,
         events: 30000,
-        marketPrices: 300000
+        marketPrices: 300000,
       },
       whaleThresholds: {
         swapUsdValue: 10000,
         depositUsdValue: 50000,
-        withdrawUsdValue: 50000
+        withdrawUsdValue: 50000,
       },
-      storage: mockStorage
+      storage: mockStorage,
     });
   });
 
@@ -119,7 +119,7 @@ describe('DataController', () => {
   describe('Start/Stop', () => {
     test('should start all collectors', async () => {
       await dataController.start();
-      
+
       expect(mockMarketPriceCollector.start).toHaveBeenCalledTimes(1);
       expect(mockPoolDataCollector.start).toHaveBeenCalledTimes(1);
       expect(mockEventCollector.start).toHaveBeenCalledTimes(1);
@@ -128,7 +128,7 @@ describe('DataController', () => {
 
     test('should stop all collectors', () => {
       dataController.stop();
-      
+
       expect(mockWhaleActivityCollector.stop).toHaveBeenCalledTimes(1);
       expect(mockEventCollector.stop).toHaveBeenCalledTimes(1);
       expect(mockPoolDataCollector.stop).toHaveBeenCalledTimes(1);
@@ -138,7 +138,7 @@ describe('DataController', () => {
     test('should not start collectors if already running', async () => {
       await dataController.start();
       await dataController.start(); // Second call should be ignored
-      
+
       expect(mockMarketPriceCollector.start).toHaveBeenCalledTimes(1);
       expect(mockPoolDataCollector.start).toHaveBeenCalledTimes(1);
       expect(mockEventCollector.start).toHaveBeenCalledTimes(1);
@@ -148,7 +148,7 @@ describe('DataController', () => {
     test('should not stop collectors if not running', () => {
       dataController.stop();
       dataController.stop(); // Second call should be ignored
-      
+
       expect(mockWhaleActivityCollector.stop).toHaveBeenCalledTimes(1);
       expect(mockEventCollector.stop).toHaveBeenCalledTimes(1);
       expect(mockPoolDataCollector.stop).toHaveBeenCalledTimes(1);
@@ -160,9 +160,9 @@ describe('DataController', () => {
     test('should track a pool in all collectors', async () => {
       const poolAddress = 'pool123';
       const metadata = { name: 'Test Pool', description: 'A test pool' };
-      
+
       await dataController.trackPool(poolAddress, metadata);
-      
+
       expect(mockPoolDataCollector.trackPool).toHaveBeenCalledWith(poolAddress);
       expect(mockEventCollector.trackPool).toHaveBeenCalledWith(poolAddress);
       expect(mockWhaleActivityCollector.trackPool).toHaveBeenCalledWith(poolAddress);
@@ -171,9 +171,9 @@ describe('DataController', () => {
 
     test('should untrack a pool in all collectors', async () => {
       const poolAddress = 'pool123';
-      
+
       await dataController.untrackPool(poolAddress);
-      
+
       expect(mockPoolDataCollector.untrackPool).toHaveBeenCalledWith(poolAddress);
       expect(mockEventCollector.untrackPool).toHaveBeenCalledWith(poolAddress);
       expect(mockWhaleActivityCollector.untrackPool).toHaveBeenCalledWith(poolAddress);
@@ -181,7 +181,7 @@ describe('DataController', () => {
 
     test('should get all tracked pools', () => {
       const pools = dataController.getTrackedPools();
-      
+
       expect(mockPoolDataCollector.getTrackedPools).toHaveBeenCalledTimes(1);
       expect(pools).toEqual(['pool1', 'pool2']);
     });
@@ -191,24 +191,24 @@ describe('DataController', () => {
     test('should track a token', async () => {
       const tokenMint = 'token123';
       const metadata = { symbol: 'TKN', name: 'Test Token' };
-      
+
       await dataController.trackToken(tokenMint, metadata);
-      
+
       expect(mockMarketPriceCollector.addToken).toHaveBeenCalledWith(tokenMint);
       expect(mockStorage.storeTokenMetadata).toHaveBeenCalledWith(tokenMint, metadata);
     });
 
     test('should untrack a token', () => {
       const tokenMint = 'token123';
-      
+
       dataController.untrackToken(tokenMint);
-      
+
       expect(mockMarketPriceCollector.removeToken).toHaveBeenCalledWith(tokenMint);
     });
 
     test('should get all tracked tokens', () => {
       const tokens = dataController.getTrackedTokens();
-      
+
       expect(mockMarketPriceCollector.getTrackedTokens).toHaveBeenCalledTimes(1);
       expect(tokens).toEqual(['token1', 'token2']);
     });
@@ -218,12 +218,12 @@ describe('DataController', () => {
     test('should get token price from cache', async () => {
       const tokenMint = 'token123';
       const price = 1.23;
-      
+
       // Set up private cache
       (dataController as any).tokenPrices.set(tokenMint, price);
-      
+
       const result = await dataController.getTokenPrice(tokenMint);
-      
+
       expect(result).toBe(price);
       expect(mockStorage.getLatestTokenPrice).not.toHaveBeenCalled();
     });
@@ -231,15 +231,15 @@ describe('DataController', () => {
     test('should get token price from storage if not in cache', async () => {
       const tokenMint = 'token123';
       const price = 1.23;
-      
+
       mockStorage.getLatestTokenPrice.mockResolvedValue({
         price,
         source: 'jupiter',
-        timestamp: Math.floor(Date.now() / 1000)
+        timestamp: Math.floor(Date.now() / 1000),
       });
-      
+
       const result = await dataController.getTokenPrice(tokenMint);
-      
+
       expect(result).toBe(price);
       expect(mockStorage.getLatestTokenPrice).toHaveBeenCalledWith(tokenMint);
     });
@@ -248,11 +248,11 @@ describe('DataController', () => {
       const poolAddress = 'pool123';
       const timeframe = 86400; // 1 day
       const mockData = { some: 'data' };
-      
+
       mockStorage.getAggregatedPoolData.mockResolvedValue(mockData);
-      
+
       const result = await dataController.getAggregatedPoolData(poolAddress, timeframe);
-      
+
       expect(result).toBe(mockData);
       expect(mockStorage.getAggregatedPoolData).toHaveBeenCalledWith(poolAddress, timeframe);
     });
@@ -262,11 +262,11 @@ describe('DataController', () => {
       const startTime = Math.floor(Date.now() / 1000) - 86400; // 1 day ago
       const endTime = Math.floor(Date.now() / 1000);
       const mockData = [{ some: 'data' }] as unknown as PoolData[];
-      
+
       mockStorage.getRawPoolData.mockResolvedValue(mockData);
-      
+
       const result = await dataController.getRawPoolData(poolAddress, startTime, endTime);
-      
+
       expect(result).toBe(mockData);
       expect(mockStorage.getRawPoolData).toHaveBeenCalledWith(poolAddress, startTime, endTime);
     });
@@ -274,11 +274,11 @@ describe('DataController', () => {
     test('should get latest pool data', async () => {
       const poolAddress = 'pool123';
       const mockData = { some: 'data' } as unknown as PoolData;
-      
+
       mockStorage.getLatestPoolData.mockResolvedValue(mockData);
-      
+
       const result = await dataController.getLatestPoolData(poolAddress);
-      
+
       expect(result).toBe(mockData);
       expect(mockStorage.getLatestPoolData).toHaveBeenCalledWith(poolAddress);
     });
@@ -288,22 +288,22 @@ describe('DataController', () => {
       const startTime = Math.floor(Date.now() / 1000) - 86400; // 1 day ago
       const endTime = Math.floor(Date.now() / 1000);
       const mockData = [{ some: 'data' }] as unknown as WhaleActivity[];
-      
+
       mockStorage.getWhaleActivities.mockResolvedValue(mockData);
-      
+
       const result = await dataController.getWhaleActivities(poolAddress, startTime, endTime);
-      
+
       expect(result).toBe(mockData);
       expect(mockStorage.getWhaleActivities).toHaveBeenCalledWith(poolAddress, startTime, endTime);
     });
 
     test('should get storage stats', async () => {
       const mockStats = { some: 'stats' };
-      
+
       mockStorage.getStats.mockResolvedValue(mockStats);
-      
+
       const result = await dataController.getStorageStats();
-      
+
       expect(result).toBe(mockStats);
       expect(mockStorage.getStats).toHaveBeenCalledTimes(1);
     });
@@ -323,12 +323,12 @@ describe('DataController', () => {
         feeGrowthGlobalA: BigInt(5000),
         feeGrowthGlobalB: BigInt(3000),
         timestamp: Math.floor(Date.now() / 1000),
-        slot: 12345
+        slot: 12345,
       } as PoolData;
-      
+
       // Call private method
       await (dataController as any).handlePoolData(poolData);
-      
+
       expect(mockStorage.storePoolData).toHaveBeenCalledWith(poolData);
     });
 
@@ -340,26 +340,26 @@ describe('DataController', () => {
         signature: 'sig123',
         blockTime: Math.floor(Date.now() / 1000),
         slot: 12345,
-        data: { amount: 1000 }
+        data: { amount: 1000 },
       } as PoolEvent;
-      
+
       // Call private method
       await (dataController as any).handleEvent(event);
-      
+
       expect(mockStorage.storeEvent).toHaveBeenCalledWith(event);
     });
 
     test('should handle market prices', async () => {
       const priceData = {
-        'token1': { price: 1.23, source: 'jupiter' },
-        'token2': { price: 4.56, source: 'coingecko' }
+        token1: { price: 1.23, source: 'jupiter' },
+        token2: { price: 4.56, source: 'coingecko' },
       };
-      
+
       // Call private method
       await (dataController as any).handleMarketPrices(priceData);
-      
+
       expect(mockStorage.storeTokenPrices).toHaveBeenCalledWith(priceData, expect.any(Number));
-      
+
       // Check that prices were cached
       expect((dataController as any).tokenPrices.get('token1')).toBe(1.23);
       expect((dataController as any).tokenPrices.get('token2')).toBe(4.56);
@@ -376,13 +376,13 @@ describe('DataController', () => {
         tokenA: { mint: 'tokenA', amount: '1000', usdValue: 1000 },
         tokenB: { mint: 'tokenB', amount: '500', usdValue: 1000 },
         totalUsdValue: 2000,
-        walletAddress: 'wallet123'
+        walletAddress: 'wallet123',
       } as WhaleActivity;
-      
+
       // Call private method
       await (dataController as any).handleWhaleActivity(activity);
-      
+
       expect(mockStorage.storeWhaleActivity).toHaveBeenCalledWith(activity);
     });
   });
-}); 
+});

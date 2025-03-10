@@ -23,17 +23,11 @@ export const httpRequestTotal = new metricsRegistry.Counter({
 // Winston logger setup
 export const logger = winston.createLogger({
   level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
+  format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
   defaultMeta: { service: 'data-service' },
   transports: [
     new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      ),
+      format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
     }),
     new ElasticsearchTransport({
       level: 'info',
@@ -45,4 +39,4 @@ export const logger = winston.createLogger({
       indexPrefix: 'liqpro-logs',
     }),
   ],
-}); 
+});

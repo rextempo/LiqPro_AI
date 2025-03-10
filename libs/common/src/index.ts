@@ -6,10 +6,10 @@ export interface HealthCheck {
 
 // Constants
 export const DEFAULT_HEALTH_CHECK: HealthCheck = {
-  status: 'ok'
+  status: 'ok',
 };
 
 // Utilities
 export function isHealthy(check: HealthCheck): boolean {
   return check.status === 'ok';
-} 
+}

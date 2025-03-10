@@ -2,4 +2,4 @@
 // Jest will automatically run this file before running tests
 
 // Clear all mocks before each test
-jest.clearAllMocks(); 
+jest.clearAllMocks();

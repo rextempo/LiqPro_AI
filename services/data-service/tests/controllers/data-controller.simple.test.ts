@@ -6,20 +6,20 @@ jest.mock('@liqpro/monitoring', () => ({
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
-    error: jest.fn()
-  })
+    error: jest.fn(),
+  }),
 }));
 
 describe('DataController', () => {
   let dataController: DataController;
-  
+
   const mockConfig = {
     rpcEndpoint: 'https://api.mainnet-beta.solana.com',
     rpcCommitment: 'confirmed' as 'processed' | 'confirmed' | 'finalized',
     apiKeys: {
       coingecko: 'mock-coingecko-key',
       coinmarketcap: 'mock-coinmarketcap-key',
-      jupiter: 'mock-jupiter-key'
+      jupiter: 'mock-jupiter-key',
     },
     poolDataInterval: 60000,
     marketPriceInterval: 300000,
@@ -31,31 +31,31 @@ describe('DataController', () => {
       compressWarmData: true,
       compressColdData: true,
       enableAutoArchiving: true,
-      archiveInterval: 24 * 60 * 60 * 1000
+      archiveInterval: 24 * 60 * 60 * 1000,
     },
     whaleMonitoring: {
       minValueUSD: 50000,
-      minPoolPercentage: 5
-    }
+      minPoolPercentage: 5,
+    },
   };
-  
+
   beforeEach(() => {
     dataController = new DataController(mockConfig);
   });
-  
+
   afterEach(() => {
     jest.clearAllMocks();
   });
-  
+
   describe('Lifecycle methods', () => {
     test('should initialize correctly', () => {
       expect(dataController).toBeDefined();
     });
-    
+
     test('should start and stop correctly', async () => {
       await dataController.start();
       dataController.stop();
       expect(true).toBe(true); // Just checking that no errors are thrown
     });
   });
-}); 
+});

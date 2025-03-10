@@ -7,7 +7,7 @@ export const mockLogger = {
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
-  error: jest.fn()
+  error: jest.fn(),
 };
 
 export const mockMetricsRegistry = {
@@ -17,15 +17,15 @@ export const mockMetricsRegistry = {
   increment: jest.fn(),
   decrement: jest.fn(),
   set: jest.fn(),
-  startTimer: jest.fn().mockReturnValue(jest.fn())
+  startTimer: jest.fn().mockReturnValue(jest.fn()),
 };
 
 export const createLogger = jest.fn().mockReturnValue(mockLogger);
-export const createMetricsMiddleware = jest.fn().mockReturnValue(
-  (req: Request, res: Response, next: NextFunction) => next()
-);
-export const createErrorLoggingMiddleware = jest.fn().mockReturnValue(
-  (err: Error, req: Request, res: Response, next: NextFunction) => {
+export const createMetricsMiddleware = jest
+  .fn()
+  .mockReturnValue((req: Request, res: Response, next: NextFunction) => next());
+export const createErrorLoggingMiddleware = jest
+  .fn()
+  .mockReturnValue((err: Error, req: Request, res: Response, next: NextFunction) => {
     res.status(500).json({ error: 'Internal Server Error' });
-  }
-); 
+  });

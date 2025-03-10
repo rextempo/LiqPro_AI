@@ -31,17 +31,20 @@ LiqPro is an AI-driven investment platform for Meteora DLMM liquidity pools on t
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/yourusername/liqpro.git
 cd liqpro
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Start development environment:
+
 ```bash
 npm run dev
 ```
@@ -70,4 +73,4 @@ npm run dev
 
 ## License
 
-Proprietary - All rights reserved 
+Proprietary - All rights reserved

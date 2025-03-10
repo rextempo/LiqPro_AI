@@ -1,16 +1,16 @@
 /// <reference types="jest" />
-const web3 = require('@solana/web3.js');
-const { SignalService } = require('../service');
-const { MeteoraDLMMSDK } = require('../../meteora/sdk');
-const { logger } = require('../../utils/logger');
-const { config } = require('../../config');
+import { Connection } from '@solana/web3.js';
+import { SignalService } from '../service';
+import { MeteoraDLMMSDK } from '../../meteora/sdk';
+import { logger } from '../../utils/logger';
+import { config } from '../../config';
 
 // 模拟依赖
 jest.mock('@solana/web3.js', () => ({
   Connection: jest.fn().mockImplementation(() => ({
     getLatestBlockhash: jest.fn().mockResolvedValue({}),
     // 添加其他需要的方法
-  }))
+  })),
 }));
 
 // 模拟SignalService
@@ -30,25 +30,25 @@ jest.mock('../service', () => ({
           analysis: {
             scores: {
               final_score: 90,
-              stability_score: 85
-            }
-          }
-        }
+              stability_score: 85,
+            },
+          },
+        },
       ],
       t2_pools: [],
       t3_pools: [],
       stats: {
         avg_daily_yield: 0.1,
-        highest_yield_pool: 'pool1'
+        highest_yield_pool: 'pool1',
       },
       performance: {
         duration: 1000,
         poolsAnalyzed: 1,
-        timestamp: '2024-03-10T12:00:00Z'
-      }
+        timestamp: '2024-03-10T12:00:00Z',
+      },
     }),
-    getEnhancedPoolData: jest.fn().mockResolvedValue({})
-  }))
+    getEnhancedPoolData: jest.fn().mockResolvedValue({}),
+  })),
 }));
 
 jest.mock('../../meteora/sdk', () => ({
@@ -60,10 +60,10 @@ jest.mock('../../meteora/sdk', () => ({
         token_y: { symbol: 'USDC', address: 'usdc-address' },
         liquidity: 10000,
         trade_volume_24h: 20000,
-        daily_yield: 0.1
-      }
-    ])
-  }))
+        daily_yield: 0.1,
+      },
+    ]),
+  })),
 }));
 
 interface AnalysisResult {
@@ -109,10 +109,10 @@ describe('SignalService Integration Tests', () => {
 
   beforeAll(async () => {
     // 使用实际的RPC连接
-    connection = new web3.Connection(config.solana.rpcEndpoint, 'confirmed');
+    connection = new Connection(config.solana.rpcEndpoint, 'confirmed');
     service = new SignalService(connection, {
       historyDays: 14,
-      updateInterval: 5 * 60 * 1000
+      updateInterval: 5 * 60 * 1000,
     });
 
     // 等待RPC连接就绪
@@ -130,7 +130,7 @@ describe('SignalService Integration Tests', () => {
       logger.info(`Found ${pools.length} pools to analyze`);
 
       // 分析池子
-      const analysis = await service.analyzePools(pools) as AnalysisResult;
+      const analysis = (await service.analyzePools(pools)) as AnalysisResult;
 
       // 验证分析结果
       expect(analysis).toHaveProperty('t1_pools');
@@ -144,7 +144,7 @@ describe('SignalService Integration Tests', () => {
         t2_count: analysis.t2_pools.length,
         t3_count: analysis.t3_pools.length,
         avg_daily_yield: analysis.stats.avg_daily_yield,
-        highest_yield_pool: analysis.stats.highest_yield_pool
+        highest_yield_pool: analysis.stats.highest_yield_pool,
       });
 
       // 验证T1池子的质量
@@ -179,8 +179,8 @@ describe('SignalService Integration Tests', () => {
       const pools = await sdk.getAllPools();
 
       // 连续进行两次分析
-      const analysis1 = await service.analyzePools(pools) as AnalysisResult;
-      const analysis2 = await service.analyzePools(pools) as AnalysisResult;
+      const analysis1 = (await service.analyzePools(pools)) as AnalysisResult;
+      const analysis2 = (await service.analyzePools(pools)) as AnalysisResult;
 
       // 验证评分的一致性
       for (let i = 0; i < analysis1.t1_pools.length; i++) {
@@ -188,10 +188,11 @@ describe('SignalService Integration Tests', () => {
         const pool2 = analysis2.t1_pools[i];
 
         // 评分差异不应超过1分
-        expect(Math.abs(
-          (pool1.analysis?.scores.final_score || 0) - 
-          (pool2.analysis?.scores.final_score || 0)
-        )).toBeLessThanOrEqual(1);
+        expect(
+          Math.abs(
+            (pool1.analysis?.scores.final_score || 0) - (pool2.analysis?.scores.final_score || 0)
+          )
+        ).toBeLessThanOrEqual(1);
       }
     }, 60000);
   });
@@ -200,21 +201,21 @@ describe('SignalService Integration Tests', () => {
     it('should handle RPC node failures gracefully', async () => {
       // 为这个测试特别设置mock
       mockAnalyzePoolsFn.mockRejectedValueOnce(new Error('Failed to fetch pool data'));
-      
+
       await expect(service.analyzePools([])).rejects.toThrow('Failed to fetch pool data');
     });
 
     it('should handle invalid pool data gracefully', async () => {
       // 为这个测试特别设置mock
       mockAnalyzePoolsFn.mockRejectedValueOnce(new Error('Invalid pool data'));
-      
+
       const invalidPool: Pool = {
         address: 'invalid-pool',
         token_x: { symbol: 'INVALID', address: 'invalid-x' },
         token_y: { symbol: 'TOKEN', address: 'invalid-y' },
         liquidity: 0,
         trade_volume_24h: 0,
-        daily_yield: 0
+        daily_yield: 0,
       };
 
       await expect(service.analyzePools([invalidPool])).rejects.toThrow('Invalid pool data');
@@ -236,7 +237,7 @@ describe('SignalService Integration Tests', () => {
       logger.info('API Performance:', {
         operation: 'getEnhancedPoolData',
         duration,
-        poolAddress: pool.address
+        poolAddress: pool.address,
       });
 
       // 验证性能要求
@@ -264,11 +265,11 @@ describe('SignalService Integration Tests', () => {
       logger.info('Memory Usage:', {
         initialHeapMB: initialMemory.heapUsed / 1024 / 1024,
         finalHeapMB: finalMemory.heapUsed / 1024 / 1024,
-        growthMB: heapGrowthMB
+        growthMB: heapGrowthMB,
       });
 
       // 验证内存使用是否在合理范围内（假设限制为500MB）
       expect(heapGrowthMB).toBeLessThan(500);
     });
   });
-}); 
+});

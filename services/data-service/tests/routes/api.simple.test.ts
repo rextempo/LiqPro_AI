@@ -7,8 +7,8 @@ jest.mock('@liqpro/monitoring', () => ({
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
-    error: jest.fn()
-  })
+    error: jest.fn(),
+  }),
 }));
 
 // Mock the DataController
@@ -21,22 +21,22 @@ const mockDataController = {
   getLatestDataPoint: jest.fn().mockResolvedValue(null),
   getWhaleActivities: jest.fn().mockResolvedValue([]),
   getStorageStats: jest.fn().mockResolvedValue({}),
-  subscribeToPoolUpdates: jest.fn().mockReturnValue({ unsubscribe: jest.fn() })
+  subscribeToPoolUpdates: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
 };
 
 describe('API Routes', () => {
   let router;
-  
+
   beforeEach(() => {
     router = createApiRoutes(mockDataController as any);
   });
-  
+
   afterEach(() => {
     jest.clearAllMocks();
   });
-  
+
   test('should create router', () => {
     expect(router).toBeDefined();
     expect(typeof router).toBe('function');
   });
-}); 
+});

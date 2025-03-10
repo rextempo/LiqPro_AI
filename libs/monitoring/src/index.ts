@@ -27,17 +27,11 @@ export const httpRequestTotal = new Counter({
 export const createLogger = (serviceName: string) => {
   return winston.createLogger({
     level: 'info',
-    format: winston.format.combine(
-      winston.format.timestamp(),
-      winston.format.json()
-    ),
+    format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
     defaultMeta: { service: serviceName },
     transports: [
       new winston.transports.Console({
-        format: winston.format.combine(
-          winston.format.colorize(),
-          winston.format.simple()
-        ),
+        format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
       }),
       new ElasticsearchTransport({
         level: 'info',
@@ -104,4 +98,4 @@ export const createErrorLoggingMiddleware = (serviceName: string) => {
 
     next(err);
   };
-}; 
+};

@@ -9,10 +9,10 @@ app.use(express.json());
 app.get('/health', async (_req: Request, res: Response) => {
   res.json({
     ...DEFAULT_HEALTH_CHECK,
-    service: 'scoring-service'
+    service: 'scoring-service',
   });
 });
 
 app.listen(port, () => {
   console.log(`Scoring service listening at http://localhost:${port}`);
-}); 
+});

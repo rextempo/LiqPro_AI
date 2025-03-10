@@ -11,7 +11,7 @@ export const createLogger = jest.fn().mockImplementation(() => ({
   debug: jest.fn(),
   info: jest.fn(),
   warn: jest.fn(),
-  error: jest.fn()
+  error: jest.fn(),
 }));
 
 export const metricsRegistry = {
@@ -21,7 +21,7 @@ export const metricsRegistry = {
   increment: jest.fn(),
   decrement: jest.fn(),
   set: jest.fn(),
-  startTimer: jest.fn().mockReturnValue(jest.fn())
+  startTimer: jest.fn().mockReturnValue(jest.fn()),
 };
 
 export const createMetricsMiddleware = jest.fn().mockImplementation(() => {
@@ -30,4 +30,4 @@ export const createMetricsMiddleware = jest.fn().mockImplementation(() => {
 
 export const createErrorLoggingMiddleware = jest.fn().mockImplementation(() => {
   return (err: Error, _req: Request, _res: Response, next: NextFunction) => next(err);
-}); 
+});

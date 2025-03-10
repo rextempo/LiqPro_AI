@@ -231,9 +231,7 @@
       "options": {
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "fields": "",
           "values": false
         },
@@ -363,4 +361,4 @@
   "title": "LiqPro Services",
   "version": 1,
   "weekStart": ""
-} 
+}

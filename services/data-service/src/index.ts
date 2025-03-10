@@ -13,7 +13,7 @@ app.get('/health', async (_req: Request, res: Response) => {
   const dbHealth = await checkDatabaseConnection();
   res.json({
     ...DEFAULT_HEALTH_CHECK,
-    database: dbHealth
+    database: dbHealth,
   });
 });
 
@@ -23,7 +23,7 @@ app.listen(PORT, () => {
 });
 
 // Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   logger.error('Uncaught exception', { error });
   process.exit(1);
 });
@@ -32,4 +32,4 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled promise rejection', { reason });
   process.exit(1);
-}); 
+});

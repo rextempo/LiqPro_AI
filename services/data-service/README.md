@@ -66,7 +66,7 @@ import {
   filterHighActivityPools,
   identifyBestPoolsPerPair,
   savePools,
-  monitorPools
+  monitorPools,
 } from './src/meteora/index.js';
 
 // 初始化连接
@@ -92,7 +92,7 @@ const monitor = monitorPools(connection, ['池地址1', '池地址2'], {
   interval: 60000, // 1 分钟
   onUpdate: (poolData, previousData, updateType, changes) => {
     console.log(`池 ${poolData.address} 数据变化`);
-  }
+  },
 });
 
 // 停止监控
@@ -166,4 +166,4 @@ monitor.stop();
 
 ## 许可证
 
-[MIT](LICENSE) 
+[MIT](LICENSE)

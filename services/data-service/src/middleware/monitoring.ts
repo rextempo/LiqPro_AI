@@ -15,7 +15,7 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
 
     // Record request duration
     httpRequestDuration.observe(labels, duration / 1000);
-    
+
     // Increment request counter
     httpRequestTotal.inc(labels);
 
@@ -34,7 +34,12 @@ export const metricsMiddleware = (req: Request, res: Response, next: NextFunctio
 };
 
 // Error logging middleware
-export const errorLoggingMiddleware = (err: Error, req: Request, res: Response, next: NextFunction) => {
+export const errorLoggingMiddleware = (
+  err: Error,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   logger.error('Error occurred', {
     error: {
       message: err.message,
@@ -49,4 +54,4 @@ export const errorLoggingMiddleware = (err: Error, req: Request, res: Response, 
   });
 
   next(err);
-}; 
+};

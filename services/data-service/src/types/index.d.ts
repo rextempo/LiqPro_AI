@@ -5,7 +5,11 @@ declare module '*/meteora/sdk' {
     constructor(connection: Connection);
     getAllPools(): Promise<Pool[]>;
     getActiveBinInfo(poolAddress: string): Promise<BinInfo>;
-    getBinsDistribution(poolAddress: string, binId: number, range: number): Promise<BinDistribution>;
+    getBinsDistribution(
+      poolAddress: string,
+      binId: number,
+      range: number
+    ): Promise<BinDistribution>;
     getPoolFeeInfo(poolAddress: string): Promise<FeeInfo>;
     getLiquidityDistribution(poolAddress: string): Promise<LiquidityDistribution>;
     getPriceHistory(poolAddress: string, days: number): Promise<PriceHistory[]>;
@@ -103,10 +107,13 @@ declare module '*/signal/service' {
   import { Pool } from '*/meteora/sdk';
 
   export class SignalService {
-    constructor(connection: Connection, options?: {
-      historyDays?: number;
-      updateInterval?: number;
-    });
+    constructor(
+      connection: Connection,
+      options?: {
+        historyDays?: number;
+        updateInterval?: number;
+      }
+    );
 
     analyzePools(pools: Pool[]): Promise<{
       timestamp: string;
@@ -124,17 +131,19 @@ declare module '*/signal/service' {
       };
     }>;
 
-    getEnhancedPoolData(pool: Pool): Promise<Pool & {
-      enhanced: {
-        activeBin: any;
-        binsDistribution: any;
-        feeInfo: any;
-        liquidityDistribution: any;
-        priceHistory: any[];
-        yieldHistory: any[];
-        volumeHistory: any[];
-        liquidityHistory: any[];
-      };
-    }>;
+    getEnhancedPoolData(pool: Pool): Promise<
+      Pool & {
+        enhanced: {
+          activeBin: any;
+          binsDistribution: any;
+          feeInfo: any;
+          liquidityDistribution: any;
+          priceHistory: any[];
+          yieldHistory: any[];
+          volumeHistory: any[];
+          liquidityHistory: any[];
+        };
+      }
+    >;
   }
-} 
+}

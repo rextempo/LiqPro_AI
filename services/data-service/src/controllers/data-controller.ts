@@ -95,7 +95,7 @@ export enum TimePeriod {
   HOUR_12 = '12h',
   DAY_1 = '1d',
   WEEK_1 = '1w',
-  MONTH_1 = '1m'
+  MONTH_1 = '1m',
 }
 
 export class DataController {
@@ -104,13 +104,13 @@ export class DataController {
   private trackedPools: Map<string, { name?: string; description?: string }> = new Map();
   private poolData: Map<string, PoolData[]> = new Map();
   private whaleActivities: WhaleActivity[] = [];
-  
+
   constructor(private config: DataControllerConfig) {
-    logger.info('DataController initialized with config', { 
+    logger.info('DataController initialized with config', {
       rpcEndpoint: config.rpcEndpoint,
       poolDataInterval: config.poolDataInterval,
       marketPriceInterval: config.marketPriceInterval,
-      eventPollingInterval: config.eventPollingInterval
+      eventPollingInterval: config.eventPollingInterval,
     });
   }
 
@@ -123,10 +123,10 @@ export class DataController {
     }
 
     logger.info('Starting data service');
-    
+
     // In a real implementation, this would initialize connections to databases,
     // start data collectors, etc.
-    
+
     this.isRunning = true;
     logger.info('Data service started');
   }
@@ -140,10 +140,10 @@ export class DataController {
     }
 
     logger.info('Stopping data service');
-    
+
     // In a real implementation, this would stop data collectors,
     // close database connections, etc.
-    
+
     this.isRunning = false;
     logger.info('Data service stopped');
   }
@@ -154,7 +154,7 @@ export class DataController {
   public async trackPool(poolAddress: string, name?: string, description?: string): Promise<void> {
     logger.info('Starting to track pool', { poolAddress, name });
     this.trackedPools.set(poolAddress, { name, description });
-    
+
     // In a real implementation, this would start collecting data for the pool
   }
 
@@ -164,7 +164,7 @@ export class DataController {
   public async untrackPool(poolAddress: string): Promise<void> {
     logger.info('Stopping tracking of pool', { poolAddress });
     this.trackedPools.delete(poolAddress);
-    
+
     // In a real implementation, this would stop collecting data for the pool
   }
 
@@ -174,7 +174,7 @@ export class DataController {
   public async getTrackedPools(): Promise<any[]> {
     return Array.from(this.trackedPools.entries()).map(([address, info]) => ({
       address,
-      ...info
+      ...info,
     }));
   }
 
@@ -182,12 +182,12 @@ export class DataController {
    * Get aggregated data for a specific pool
    */
   public async getAggregatedData(
-    poolAddress: string, 
-    timeframe: string, 
+    poolAddress: string,
+    timeframe: string,
     resolution: string
   ): Promise<any[]> {
     logger.info('Getting aggregated data', { poolAddress, timeframe, resolution });
-    
+
     // In a real implementation, this would retrieve and aggregate data from storage
     return [];
   }
@@ -196,13 +196,13 @@ export class DataController {
    * Get raw data points for a specific pool
    */
   public async getRawData(
-    poolAddress: string, 
-    startTime?: number, 
+    poolAddress: string,
+    startTime?: number,
     endTime?: number,
     limit?: number
   ): Promise<PoolData[]> {
     logger.info('Getting raw data', { poolAddress, startTime, endTime, limit });
-    
+
     // In a real implementation, this would retrieve data from storage
     return this.poolData.get(poolAddress) || [];
   }
@@ -212,12 +212,12 @@ export class DataController {
    */
   public async getLatestDataPoint(poolAddress: string): Promise<PoolData | null> {
     logger.info('Getting latest data point', { poolAddress });
-    
+
     const poolDataPoints = this.poolData.get(poolAddress) || [];
     if (poolDataPoints.length === 0) {
       return null;
     }
-    
+
     // Return the most recent data point
     return poolDataPoints[poolDataPoints.length - 1];
   }
@@ -232,27 +232,27 @@ export class DataController {
     limit?: number
   ): Promise<WhaleActivity[]> {
     logger.info('Getting whale activities', { poolAddress, startTime, endTime, limit });
-    
+
     let activities = this.whaleActivities;
-    
+
     // Apply filters
     if (poolAddress) {
       activities = activities.filter(a => a.poolAddress === poolAddress);
     }
-    
+
     if (startTime) {
       activities = activities.filter(a => a.timestamp >= startTime);
     }
-    
+
     if (endTime) {
       activities = activities.filter(a => a.timestamp <= endTime);
     }
-    
+
     // Apply limit
     if (limit && activities.length > limit) {
       activities = activities.slice(0, limit);
     }
-    
+
     return activities;
   }
 
@@ -261,7 +261,7 @@ export class DataController {
    */
   public async getStorageStats(): Promise<StorageStats> {
     logger.info('Getting storage stats');
-    
+
     // In a real implementation, this would calculate storage statistics
     return {
       hotDataSize: 0,
@@ -270,7 +270,7 @@ export class DataController {
       totalDataPoints: 0,
       poolCount: this.trackedPools.size,
       oldestDataTimestamp: Date.now() - 30 * 24 * 60 * 60 * 1000, // 30 days ago
-      newestDataTimestamp: Date.now()
+      newestDataTimestamp: Date.now(),
     };
   }
 
@@ -278,15 +278,15 @@ export class DataController {
    * Subscribe to real-time updates for a specific pool
    */
   public subscribeToPoolUpdates(
-    poolAddress: string, 
+    poolAddress: string,
     callback: (data: any) => void
   ): PoolSubscription {
     if (!this.poolSubscriptions.has(poolAddress)) {
       this.poolSubscriptions.set(poolAddress, new Set());
     }
-    
+
     this.poolSubscriptions.get(poolAddress)!.add(callback);
-    
+
     return {
       unsubscribe: () => {
         const callbacks = this.poolSubscriptions.get(poolAddress);
@@ -296,7 +296,7 @@ export class DataController {
             this.poolSubscriptions.delete(poolAddress);
           }
         }
-      }
+      },
     };
   }
 

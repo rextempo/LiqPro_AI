@@ -16,7 +16,10 @@ export interface DataStorage {
    * @param poolAddress Pool address
    * @param metadata Pool metadata
    */
-  storePoolMetadata(poolAddress: string, metadata: { name?: string; description?: string }): Promise<void>;
+  storePoolMetadata(
+    poolAddress: string,
+    metadata: { name?: string; description?: string }
+  ): Promise<void>;
 
   /**
    * Store event data
@@ -29,14 +32,20 @@ export interface DataStorage {
    * @param priceData Token price data
    * @param timestamp Timestamp
    */
-  storeTokenPrices(priceData: Record<string, { price: number; source: string }>, timestamp: number): Promise<void>;
+  storeTokenPrices(
+    priceData: Record<string, { price: number; source: string }>,
+    timestamp: number
+  ): Promise<void>;
 
   /**
    * Store token metadata
    * @param tokenMint Token mint address
    * @param metadata Token metadata
    */
-  storeTokenMetadata(tokenMint: string, metadata: { symbol?: string; name?: string }): Promise<void>;
+  storeTokenMetadata(
+    tokenMint: string,
+    metadata: { symbol?: string; name?: string }
+  ): Promise<void>;
 
   /**
    * Store whale activity
@@ -56,7 +65,9 @@ export interface DataStorage {
    * @param tokenMint Token mint address
    * @returns Latest token price data or null if not found
    */
-  getLatestTokenPrice(tokenMint: string): Promise<{ price: number; source: string; timestamp: number } | null>;
+  getLatestTokenPrice(
+    tokenMint: string
+  ): Promise<{ price: number; source: string; timestamp: number } | null>;
 
   /**
    * Get raw pool data
@@ -82,11 +93,15 @@ export interface DataStorage {
    * @param endTime Optional end time in seconds
    * @returns Array of whale activities
    */
-  getWhaleActivities(poolAddress?: string, startTime?: number, endTime?: number): Promise<WhaleActivity[]>;
+  getWhaleActivities(
+    poolAddress?: string,
+    startTime?: number,
+    endTime?: number
+  ): Promise<WhaleActivity[]>;
 
   /**
    * Get storage statistics
    * @returns Storage statistics
    */
   getStats(): Promise<StorageStats>;
-} 
+}

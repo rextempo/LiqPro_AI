@@ -18,7 +18,8 @@ const config = {
   port: parseInt(process.env.PORT || '3001'),
   rpcEndpoint: process.env.SOLANA_RPC_ENDPOINT || 'https://api.mainnet-beta.solana.com',
   rpcCommitment: (process.env.SOLANA_RPC_COMMITMENT || 'confirmed') as Finality,
-  meteoraProgramId: process.env.METEORA_PROGRAM_ID || '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',
+  meteoraProgramId:
+    process.env.METEORA_PROGRAM_ID || '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',
   mongodb: {
     uri: process.env.MONGODB_URI || 'mongodb://localhost:27017',
     dbName: process.env.MONGODB_DB_NAME || 'liqpro_data',
@@ -32,7 +33,7 @@ const config = {
     swapUsdValue: parseInt(process.env.WHALE_SWAP_THRESHOLD || '10000'),
     depositUsdValue: parseInt(process.env.WHALE_DEPOSIT_THRESHOLD || '50000'),
     withdrawUsdValue: parseInt(process.env.WHALE_WITHDRAW_THRESHOLD || '50000'),
-  }
+  },
 };
 
 // Initialize storage
@@ -53,8 +54,8 @@ const storage = new MongoDBStorage({
       poolData: 60 * 60 * 24 * 30, // 30 days
       events: 60 * 60 * 24 * 90, // 90 days
       tokenPrices: 60 * 60 * 24 * 30, // 30 days
-    }
-  }
+    },
+  },
 });
 
 // Initialize data controller
@@ -100,35 +101,35 @@ async function startServer() {
   try {
     // Connect to MongoDB
     await storage.connect();
-    
+
     // Start data controller
     await dataController.start();
-    
+
     // Start server
     server.listen(config.port, () => {
       logger.info(`Server started on port ${config.port}`);
     });
-    
+
     // Handle shutdown
     const shutdown = async () => {
       logger.info('Shutting down...');
-      
+
       // Stop data controller
       dataController.stop();
-      
+
       // Close WebSocket server
       wss.close();
-      
+
       // Close HTTP server
       server.close();
-      
+
       // Disconnect from MongoDB
       await storage.disconnect();
-      
+
       logger.info('Shutdown complete');
       process.exit(0);
     };
-    
+
     process.on('SIGINT', shutdown);
     process.on('SIGTERM', shutdown);
   } catch (error: any) {
@@ -138,4 +139,4 @@ async function startServer() {
 }
 
 // Start server
-startServer(); 
+startServer();

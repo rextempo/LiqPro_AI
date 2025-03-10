@@ -15,7 +15,7 @@ export enum ErrorType {
   NOT_FOUND = 'not_found_error',
   RATE_LIMIT = 'rate_limit_error',
   INTERNAL = 'internal_error',
-  EXTERNAL_API = 'external_api_error'
+  EXTERNAL_API = 'external_api_error',
 }
 
 /**
@@ -48,7 +48,7 @@ export class AppError extends Error {
     this.statusCode = statusCode;
     this.details = details;
     this.isOperational = isOperational;
-    
+
     // Capture stack trace
     Error.captureStackTrace(this, this.constructor);
   }
@@ -71,15 +71,15 @@ export class ErrorHandler {
         details: error.details,
         isOperational: error.isOperational,
         stack: error.stack,
-        context
+        context,
       });
     } else {
       logger.error(`[${ErrorType.INTERNAL}] ${error.message}`, {
         stack: error.stack,
-        context
+        context,
       });
     }
-    
+
     // If error is not operational, we might want to do something more drastic
     // like exit the process, but for now we'll just log it
     if (error instanceof AppError && !error.isOperational) {
@@ -204,16 +204,18 @@ export class ErrorHandler {
   }
 
   /**
-   * Wrap express async handler
-   * @param fn Express handler function
-   * @returns Wrapped express handler
+   * Express异步处理器包装函数
+   * @param fn 要包装的异步函数
+   * @returns 包装后的函数
    */
-  static expressAsyncHandler(fn: Function): Function {
-    return (req: any, res: any, next: any) => {
-      Promise.resolve(fn(req, res, next)).catch((error: any) => {
+  static expressAsyncHandler(
+    fn: (req: Express.Request, res: Express.Response, next: Express.NextFunction) => Promise<any>
+  ): (req: Express.Request, res: Express.Response, next: Express.NextFunction) => void {
+    return (req: Express.Request, res: Express.Response, next: Express.NextFunction) => {
+      Promise.resolve(fn(req, res, next)).catch((error: unknown) => {
         ErrorHandler.handleError(error, { path: req.path, method: req.method });
         next(error);
       });
     };
   }
-} 
+}

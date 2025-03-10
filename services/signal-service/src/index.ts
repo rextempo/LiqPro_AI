@@ -9,10 +9,10 @@ app.use(express.json());
 app.get('/health', async (_req: Request, res: Response) => {
   res.json({
     ...DEFAULT_HEALTH_CHECK,
-    service: 'signal-service'
+    service: 'signal-service',
   });
 });
 
 app.listen(port, () => {
   console.log(`Signal service listening at http://localhost:${port}`);
-}); 
+});

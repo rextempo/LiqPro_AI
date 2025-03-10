@@ -49,45 +49,45 @@ export class DataController {
   constructor(config: DataControllerConfig) {
     this.config = config;
     this.storage = config.storage;
-    
+
     // Initialize collectors
     this.poolDataCollector = new PoolDataCollector({
       rpcEndpoint: config.rpcEndpoint,
       rpcCommitment: config.rpcCommitment,
       interval: config.collectionIntervals.poolData,
       onData: this.handlePoolData.bind(this),
-      meteoraProgramId: config.meteoraProgramId
+      meteoraProgramId: config.meteoraProgramId,
     });
-    
+
     this.eventCollector = new EventCollector({
       rpcEndpoint: config.rpcEndpoint,
       rpcCommitment: config.rpcCommitment,
       interval: config.collectionIntervals.events,
-      onEvent: this.handleEvent.bind(this)
+      onEvent: this.handleEvent.bind(this),
     });
-    
+
     this.marketPriceCollector = new MarketPriceCollector({
       interval: config.collectionIntervals.marketPrices,
       onData: this.handleMarketPrices.bind(this),
       apiKeys: {
         coingecko: process.env.COINGECKO_API_KEY,
         coinmarketcap: process.env.COINMARKETCAP_API_KEY,
-        jupiter: process.env.JUPITER_API_KEY
-      }
+        jupiter: process.env.JUPITER_API_KEY,
+      },
     });
-    
+
     this.whaleActivityCollector = new WhaleActivityCollector({
       rpcEndpoint: config.rpcEndpoint,
       rpcCommitment: config.rpcCommitment,
       interval: config.collectionIntervals.events,
       onActivity: this.handleWhaleActivity.bind(this),
       thresholds: config.whaleThresholds,
-      getPriceForToken: this.getTokenPrice.bind(this)
+      getPriceForToken: this.getTokenPrice.bind(this),
     });
-    
+
     logger.info('Data Controller initialized', {
       rpcEndpoint: config.rpcEndpoint,
-      meteoraProgramId: config.meteoraProgramId
+      meteoraProgramId: config.meteoraProgramId,
     });
   }
 
@@ -101,13 +101,13 @@ export class DataController {
     }
 
     logger.info('Starting Data Controller');
-    
+
     // Start collectors
     await this.marketPriceCollector.start();
     await this.poolDataCollector.start();
     await this.eventCollector.start();
     await this.whaleActivityCollector.start();
-    
+
     this.isRunning = true;
     logger.info('Data Controller started');
   }
@@ -122,13 +122,13 @@ export class DataController {
     }
 
     logger.info('Stopping Data Controller');
-    
+
     // Stop collectors
     this.whaleActivityCollector.stop();
     this.eventCollector.stop();
     this.poolDataCollector.stop();
     this.marketPriceCollector.stop();
-    
+
     this.isRunning = false;
     logger.info('Data Controller stopped');
   }
@@ -138,20 +138,23 @@ export class DataController {
    * @param poolAddress Pool address
    * @param metadata Optional metadata about the pool
    */
-  async trackPool(poolAddress: string, metadata?: { name?: string; description?: string }): Promise<void> {
+  async trackPool(
+    poolAddress: string,
+    metadata?: { name?: string; description?: string }
+  ): Promise<void> {
     logger.info(`Tracking pool ${poolAddress}`, { metadata });
-    
+
     try {
       // Track pool in all collectors
       await this.poolDataCollector.trackPool(poolAddress);
       await this.eventCollector.trackPool(poolAddress);
       await this.whaleActivityCollector.trackPool(poolAddress);
-      
+
       // Store pool metadata
       if (metadata) {
         await this.storage.storePoolMetadata(poolAddress, metadata);
       }
-      
+
       logger.info(`Successfully tracking pool ${poolAddress}`);
     } catch (error: any) {
       logger.error(`Failed to track pool ${poolAddress}`, { error });
@@ -165,12 +168,12 @@ export class DataController {
    */
   async untrackPool(poolAddress: string): Promise<void> {
     logger.info(`Untracking pool ${poolAddress}`);
-    
+
     // Untrack pool in all collectors
     this.poolDataCollector.untrackPool(poolAddress);
     this.eventCollector.untrackPool(poolAddress);
     this.whaleActivityCollector.untrackPool(poolAddress);
-    
+
     logger.info(`Successfully untracked pool ${poolAddress}`);
   }
 
@@ -187,18 +190,21 @@ export class DataController {
    * @param tokenMint Token mint address
    * @param metadata Optional metadata about the token
    */
-  async trackToken(tokenMint: string, metadata?: { symbol?: string; name?: string }): Promise<void> {
+  async trackToken(
+    tokenMint: string,
+    metadata?: { symbol?: string; name?: string }
+  ): Promise<void> {
     logger.info(`Tracking token ${tokenMint}`, { metadata });
-    
+
     try {
       // Track token in market price collector
       await this.marketPriceCollector.addToken(tokenMint);
-      
+
       // Store token metadata
       if (metadata) {
         await this.storage.storeTokenMetadata(tokenMint, metadata);
       }
-      
+
       logger.info(`Successfully tracking token ${tokenMint}`);
     } catch (error: any) {
       logger.error(`Failed to track token ${tokenMint}`, { error });
@@ -212,10 +218,10 @@ export class DataController {
    */
   untrackToken(tokenMint: string): void {
     logger.info(`Untracking token ${tokenMint}`);
-    
+
     // Untrack token in market price collector
     this.marketPriceCollector.removeToken(tokenMint);
-    
+
     logger.info(`Successfully untracked token ${tokenMint}`);
   }
 
@@ -238,7 +244,7 @@ export class DataController {
     if (cachedPrice !== undefined) {
       return cachedPrice;
     }
-    
+
     // If not in cache, try to get from storage
     try {
       const priceData = await this.storage.getLatestTokenPrice(tokenMint);
@@ -248,7 +254,7 @@ export class DataController {
     } catch (error: any) {
       logger.error(`Error getting token price for ${tokenMint}`, { error });
     }
-    
+
     return undefined;
   }
 
@@ -274,7 +280,11 @@ export class DataController {
    * @param endTime End time in seconds
    * @returns Raw pool data
    */
-  async getRawPoolData(poolAddress: string, startTime: number, endTime: number): Promise<PoolData[]> {
+  async getRawPoolData(
+    poolAddress: string,
+    startTime: number,
+    endTime: number
+  ): Promise<PoolData[]> {
     try {
       return await this.storage.getRawPoolData(poolAddress, startTime, endTime);
     } catch (error: any) {
@@ -338,7 +348,7 @@ export class DataController {
     try {
       // Store pool data
       await this.storage.storePoolData(data);
-      
+
       logger.debug(`Stored data for pool ${data.address}`);
     } catch (error: any) {
       logger.error(`Error handling pool data for ${data.address}`, { error });
@@ -353,7 +363,7 @@ export class DataController {
     try {
       // Store event
       await this.storage.storeEvent(event);
-      
+
       logger.debug(`Stored event ${event.id} for pool ${event.poolAddress}`);
     } catch (error: any) {
       logger.error(`Error handling event ${event.id}`, { error });
@@ -364,18 +374,20 @@ export class DataController {
    * Handle market prices from the market price collector
    * @param priceData Market price data
    */
-  private async handleMarketPrices(priceData: Record<string, { price: number; source: string }>): Promise<void> {
+  private async handleMarketPrices(
+    priceData: Record<string, { price: number; source: string }>
+  ): Promise<void> {
     try {
       const timestamp = Math.floor(Date.now() / 1000);
-      
+
       // Update token price cache
       for (const [tokenMint, data] of Object.entries(priceData)) {
         this.tokenPrices.set(tokenMint, data.price);
       }
-      
+
       // Store price data
       await this.storage.storeTokenPrices(priceData, timestamp);
-      
+
       logger.debug(`Stored prices for ${Object.keys(priceData).length} tokens`);
     } catch (error: any) {
       logger.error('Error handling market prices', { error });
@@ -390,10 +402,10 @@ export class DataController {
     try {
       // Store whale activity
       await this.storage.storeWhaleActivity(activity);
-      
+
       logger.info(`Stored whale activity ${activity.id} for pool ${activity.poolAddress}`);
     } catch (error: any) {
       logger.error(`Error handling whale activity ${activity.id}`, { error });
     }
   }
-} 
+}

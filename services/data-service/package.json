@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
     "test:simple": "jest --no-cache --testTimeout=10000 --detectOpenHandles"

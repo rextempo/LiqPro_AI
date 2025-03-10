@@ -49,7 +49,7 @@ const poolSummary = allPools.map(pool => ({
   tokenX: pool.tokenX.toString(),
   tokenY: pool.tokenY.toString(),
   binStep: pool.binStep.toString(),
-  activeId: pool.activeId.toString()
+  activeId: pool.activeId.toString(),
 }));
 console.table(poolSummary);
 ```
@@ -63,20 +63,17 @@ const connection = new Connection(RPC_ENDPOINT, { commitment: 'confirmed' });
 const METEORA_PROGRAM_ID = new PublicKey('LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo');
 
 // 获取所有池账户
-const accounts = await connection.getProgramAccounts(
-  METEORA_PROGRAM_ID,
-  {
-    filters: [
-      {
-        memcmp: {
-          offset: 8, // 跳过 discriminator
-          bytes: '3' // LbPair account discriminator
-        }
-      }
-    ],
-    dataSlice: { offset: 0, length: 0 } // 只获取地址，不获取数据
-  }
-);
+const accounts = await connection.getProgramAccounts(METEORA_PROGRAM_ID, {
+  filters: [
+    {
+      memcmp: {
+        offset: 8, // 跳过 discriminator
+        bytes: '3', // LbPair account discriminator
+      },
+    },
+  ],
+  dataSlice: { offset: 0, length: 0 }, // 只获取地址，不获取数据
+});
 console.log(`找到 ${accounts.length} 个池账户`);
 ```
 
@@ -90,7 +87,7 @@ const response = await fetch('https://dlmm-api.meteora.ag/pool/all');
 if (response.ok) {
   const { data: pools } = await response.json();
   console.log(`API 返回 ${pools.length} 个池`);
-  
+
   // 显示池信息
   const apiPoolSummary = pools.map(pool => ({
     address: pool.address,
@@ -99,7 +96,7 @@ if (response.ok) {
     tokenXSymbol: pool.tokenXSymbol,
     tokenYSymbol: pool.tokenYSymbol,
     binStep: pool.binStep,
-    price: pool.price
+    price: pool.price,
   }));
   console.table(apiPoolSummary);
 }
@@ -115,11 +112,11 @@ const DLMM = pkg.default;
 
 // 初始化连接
 const connection = new Connection(RPC_ENDPOINT, {
-  commitment: 'confirmed'
+  commitment: 'confirmed',
 });
 
 // 池地址
-const POOL_ADDRESS = new PublicKey("ARwi1S4DaiTG5DX7S4M4ZsrXqpMD1MrTmbu9ue2tpmEq");
+const POOL_ADDRESS = new PublicKey('ARwi1S4DaiTG5DX7S4M4ZsrXqpMD1MrTmbu9ue2tpmEq');
 
 // 创建 DLMM 实例
 const dlmmPool = await DLMM.create(connection, POOL_ADDRESS);
@@ -147,7 +144,7 @@ const binDistribution = binsAroundActive.bins.map(bin => ({
   binId: bin.binId,
   price: bin.price,
   xAmount: bin.xAmount.toString(),
-  yAmount: bin.yAmount.toString()
+  yAmount: bin.yAmount.toString(),
 }));
 console.table(binDistribution);
 ```
@@ -187,19 +184,14 @@ const binArrays = await dlmmPool.getBinArrayForSwap(swapYtoX);
 const swapAmount = new BN(100 * 1000000); // 假设 6 位小数
 const slippage = new BN(10); // 1% 滑点
 
-const swapQuote = await dlmmPool.swapQuote(
-  swapAmount,
-  swapYtoX,
-  slippage,
-  binArrays
-);
+const swapQuote = await dlmmPool.swapQuote(swapAmount, swapYtoX, slippage, binArrays);
 
 console.log('交换报价:', {
   inAmount: swapQuote.inAmount.toString(),
   outAmount: swapQuote.outAmount.toString(),
   minOutAmount: swapQuote.minOutAmount.toString(),
   fee: swapQuote.fee.toString(),
-  priceImpact: swapQuote.priceImpact.toString()
+  priceImpact: swapQuote.priceImpact.toString(),
 });
 ```
 
@@ -216,4 +208,4 @@ console.log('交换报价:', {
 
 - 确保使用正确的 RPC 端点，以获得最佳性能和稳定性
 - 对于高频操作，建议实现重试机制和错误处理
-- 在处理大量数据时，注意内存使用和性能优化 
+- 在处理大量数据时，注意内存使用和性能优化

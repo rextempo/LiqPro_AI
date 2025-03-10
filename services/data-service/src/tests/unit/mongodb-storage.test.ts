@@ -9,8 +9,8 @@ jest.mock('@liqpro/monitoring', () => ({
     info: jest.fn(),
     error: jest.fn(),
     debug: jest.fn(),
-    warn: jest.fn()
-  })
+    warn: jest.fn(),
+  }),
 }));
 
 describe('MongoDBStorage', () => {
@@ -42,11 +42,11 @@ describe('MongoDBStorage', () => {
         events: 'events',
         tokenPrices: 'token_prices',
         tokenMetadata: 'token_metadata',
-        whaleActivities: 'whale_activities'
+        whaleActivities: 'whale_activities',
       },
       indexes: {
-        enabled: true
-      }
+        enabled: true,
+      },
     });
 
     // Connect to MongoDB
@@ -62,7 +62,7 @@ describe('MongoDBStorage', () => {
       events: db.collection('events'),
       tokenPrices: db.collection('token_prices'),
       tokenMetadata: db.collection('token_metadata'),
-      whaleActivities: db.collection('whale_activities')
+      whaleActivities: db.collection('whale_activities'),
     };
   });
 
@@ -88,12 +88,12 @@ describe('MongoDBStorage', () => {
       tokenA: {
         mint: 'tokenA123',
         decimals: 9,
-        reserve: BigInt(1000000000)
+        reserve: BigInt(1000000000),
       },
       tokenB: {
         mint: 'tokenB456',
         decimals: 6,
-        reserve: BigInt(500000000)
+        reserve: BigInt(500000000),
       },
       fee: 0.003,
       tickSpacing: 10,
@@ -103,7 +103,7 @@ describe('MongoDBStorage', () => {
       feeGrowthGlobalA: BigInt(5000),
       feeGrowthGlobalB: BigInt(3000),
       timestamp: Math.floor(Date.now() / 1000),
-      slot: 12345
+      slot: 12345,
     };
 
     test('should store and retrieve pool data', async () => {
@@ -134,25 +134,25 @@ describe('MongoDBStorage', () => {
 
     test('should retrieve raw pool data within time range', async () => {
       const now = Math.floor(Date.now() / 1000);
-      
+
       // Create multiple data points with different timestamps
       const dataPoint1 = { ...samplePoolData, timestamp: now - 3600 }; // 1 hour ago
       const dataPoint2 = { ...samplePoolData, timestamp: now - 1800 }; // 30 minutes ago
-      const dataPoint3 = { ...samplePoolData, timestamp: now - 900 };  // 15 minutes ago
-      const dataPoint4 = { ...samplePoolData, timestamp: now };        // now
-      
+      const dataPoint3 = { ...samplePoolData, timestamp: now - 900 }; // 15 minutes ago
+      const dataPoint4 = { ...samplePoolData, timestamp: now }; // now
+
       await storage.storePoolData(dataPoint1);
       await storage.storePoolData(dataPoint2);
       await storage.storePoolData(dataPoint3);
       await storage.storePoolData(dataPoint4);
-      
+
       // Retrieve data within a specific time range
       const data = await storage.getRawPoolData(
         samplePoolData.address,
-        now - 2000,  // Between dataPoint2 and dataPoint3
-        now - 800    // After dataPoint3, before dataPoint4
+        now - 2000, // Between dataPoint2 and dataPoint3
+        now - 800 // After dataPoint3, before dataPoint4
       );
-      
+
       expect(data.length).toBe(1);
       expect(data[0].timestamp).toBe(dataPoint3.timestamp);
     });
@@ -162,20 +162,20 @@ describe('MongoDBStorage', () => {
     test('should store and update pool metadata', async () => {
       const poolAddress = 'pool123';
       const metadata = { name: 'Test Pool', description: 'A test pool' };
-      
+
       // Store metadata
       await storage.storePoolMetadata(poolAddress, metadata);
-      
+
       // Verify data was stored
       const storedData = await collections.poolMetadata.findOne({ poolAddress });
       expect(storedData).toBeTruthy();
       expect(storedData?.name).toBe(metadata.name);
       expect(storedData?.description).toBe(metadata.description);
-      
+
       // Update metadata
       const updatedMetadata = { name: 'Updated Pool', description: 'An updated test pool' };
       await storage.storePoolMetadata(poolAddress, updatedMetadata);
-      
+
       // Verify data was updated
       const updatedData = await collections.poolMetadata.findOne({ poolAddress });
       expect(updatedData).toBeTruthy();
@@ -192,13 +192,13 @@ describe('MongoDBStorage', () => {
       signature: 'sig123',
       blockTime: Math.floor(Date.now() / 1000),
       slot: 12345,
-      data: { amount: 1000 }
+      data: { amount: 1000 },
     };
 
     test('should store and retrieve events', async () => {
       // Store event
       await storage.storeEvent(sampleEvent);
-      
+
       // Verify data was stored
       const storedData = await collections.events.findOne({ eventId: sampleEvent.id });
       expect(storedData).toBeTruthy();
@@ -211,19 +211,19 @@ describe('MongoDBStorage', () => {
     test('should store and retrieve token prices', async () => {
       const tokenMint = 'token123';
       const priceData = {
-        [tokenMint]: { price: 1.23, source: 'jupiter' }
+        [tokenMint]: { price: 1.23, source: 'jupiter' },
       };
       const timestamp = Math.floor(Date.now() / 1000);
-      
+
       // Store price data
       await storage.storeTokenPrices(priceData, timestamp);
-      
+
       // Verify data was stored
       const storedData = await collections.tokenPrices.findOne({ tokenMint });
       expect(storedData).toBeTruthy();
       expect(storedData?.price).toBe(priceData[tokenMint].price);
       expect(storedData?.source).toBe(priceData[tokenMint].source);
-      
+
       // Retrieve latest price
       const latestPrice = await storage.getLatestTokenPrice(tokenMint);
       expect(latestPrice).toBeTruthy();
@@ -236,20 +236,20 @@ describe('MongoDBStorage', () => {
     test('should store and update token metadata', async () => {
       const tokenMint = 'token123';
       const metadata = { symbol: 'TKN', name: 'Test Token' };
-      
+
       // Store metadata
       await storage.storeTokenMetadata(tokenMint, metadata);
-      
+
       // Verify data was stored
       const storedData = await collections.tokenMetadata.findOne({ tokenMint });
       expect(storedData).toBeTruthy();
       expect(storedData?.symbol).toBe(metadata.symbol);
       expect(storedData?.name).toBe(metadata.name);
-      
+
       // Update metadata
       const updatedMetadata = { symbol: 'UTKN', name: 'Updated Test Token' };
       await storage.storeTokenMetadata(tokenMint, updatedMetadata);
-      
+
       // Verify data was updated
       const updatedData = await collections.tokenMetadata.findOne({ tokenMint });
       expect(updatedData).toBeTruthy();
@@ -269,28 +269,30 @@ describe('MongoDBStorage', () => {
       tokenA: {
         mint: 'tokenA123',
         amount: '1000000000',
-        usdValue: 1000
+        usdValue: 1000,
       },
       tokenB: {
         mint: 'tokenB456',
         amount: '500000000',
-        usdValue: 1000
+        usdValue: 1000,
       },
       totalUsdValue: 2000,
-      walletAddress: 'wallet123'
+      walletAddress: 'wallet123',
     };
 
     test('should store and retrieve whale activities', async () => {
       // Store activity
       await storage.storeWhaleActivity(sampleActivity);
-      
+
       // Verify data was stored
-      const storedData = await collections.whaleActivities.findOne({ activityId: sampleActivity.id });
+      const storedData = await collections.whaleActivities.findOne({
+        activityId: sampleActivity.id,
+      });
       expect(storedData).toBeTruthy();
       expect(storedData?.poolAddress).toBe(sampleActivity.poolAddress);
       expect(storedData?.type).toBe(sampleActivity.type);
       expect(storedData?.walletAddress).toBe(sampleActivity.walletAddress);
-      
+
       // Retrieve whale activities
       const activities = await storage.getWhaleActivities(sampleActivity.poolAddress);
       expect(activities.length).toBe(1);
@@ -300,25 +302,25 @@ describe('MongoDBStorage', () => {
 
     test('should filter whale activities by time range', async () => {
       const now = Math.floor(Date.now() / 1000);
-      
+
       // Create multiple activities with different timestamps
       const activity1 = { ...sampleActivity, id: 'activity1', blockTime: now - 3600 }; // 1 hour ago
       const activity2 = { ...sampleActivity, id: 'activity2', blockTime: now - 1800 }; // 30 minutes ago
-      const activity3 = { ...sampleActivity, id: 'activity3', blockTime: now - 900 };  // 15 minutes ago
-      const activity4 = { ...sampleActivity, id: 'activity4', blockTime: now };        // now
-      
+      const activity3 = { ...sampleActivity, id: 'activity3', blockTime: now - 900 }; // 15 minutes ago
+      const activity4 = { ...sampleActivity, id: 'activity4', blockTime: now }; // now
+
       await storage.storeWhaleActivity(activity1);
       await storage.storeWhaleActivity(activity2);
       await storage.storeWhaleActivity(activity3);
       await storage.storeWhaleActivity(activity4);
-      
+
       // Retrieve activities within a specific time range
       const activities = await storage.getWhaleActivities(
         sampleActivity.poolAddress,
-        now - 2000,  // Between activity2 and activity3
-        now - 800    // After activity3, before activity4
+        now - 2000, // Between activity2 and activity3
+        now - 800 // After activity3, before activity4
       );
-      
+
       expect(activities.length).toBe(1);
       expect(activities[0].id).toBe(activity3.id);
     });
@@ -332,12 +334,12 @@ describe('MongoDBStorage', () => {
         tokenA: {
           mint: 'tokenA123',
           decimals: 9,
-          reserve: BigInt(1000000000)
+          reserve: BigInt(1000000000),
         },
         tokenB: {
           mint: 'tokenB456',
           decimals: 6,
-          reserve: BigInt(500000000)
+          reserve: BigInt(500000000),
         },
         fee: 0.003,
         tickSpacing: 10,
@@ -347,14 +349,14 @@ describe('MongoDBStorage', () => {
         feeGrowthGlobalA: BigInt(5000),
         feeGrowthGlobalB: BigInt(3000),
         timestamp: Math.floor(Date.now() / 1000),
-        slot: 12345
+        slot: 12345,
       });
-      
+
       await storage.storePoolMetadata('pool123', { name: 'Test Pool' });
-      
+
       // Get stats
       const stats = await storage.getStats();
-      
+
       // Verify stats
       expect(stats).toBeTruthy();
       expect(stats.poolData).toBe(1);
@@ -362,4 +364,4 @@ describe('MongoDBStorage', () => {
       expect(stats.pools).toBe(1);
     });
   });
-}); 
+});

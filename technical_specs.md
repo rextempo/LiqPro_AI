@@ -3,6 +3,7 @@
 ## 1. 服务架构设计
 
 ### 1.1 目录结构
+
 ```
 /LiqPro
 ├── services/                # 微服务模块
@@ -40,24 +41,28 @@
 ### 1.2 服务职责划分
 
 #### data-service（数据服务）
+
 - Meteora池子数据采集
 - 市场数据聚合
 - 历史数据存储和管理
 - 实时数据流处理
 
 #### signal-service（信号服务）
+
 - 市场分析
 - 策略生成
 - 信号优化
 - 回测模拟
 
 #### scoring-service（评分服务）
+
 - 池子健康度评分
 - 风险评估
 - 收益分析
 - 决策建议生成
 
 #### agent-engine（Agent引擎）
+
 - Agent生命周期管理
 - 交易执行
 - 资金管理
@@ -66,6 +71,7 @@
 ## 2. Docker配置规范
 
 ### 2.1 开发环境配置
+
 ```yaml
 # docker-compose.dev.yml
 version: '3.8'
@@ -111,7 +117,7 @@ services:
     image: redis:6.2
     command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
     ports:
-      - "6379:6379"
+      - '6379:6379'
 
   mongodb:
     image: mongo:5.0
@@ -119,7 +125,7 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=secret
     ports:
-      - "27017:27017"
+      - '27017:27017'
     volumes:
       - mongodb_data:/data/db
 
@@ -130,7 +136,7 @@ services:
       - POSTGRES_PASSWORD=secret
       - POSTGRES_DB=liqpro
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -140,29 +146,31 @@ volumes:
 ```
 
 ### 2.2 生产环境资源限制
+
 ```yaml
 # 生产环境资源配置
 resources:
   data-service:
-    cpu: "2"
-    memory: "4Gi"
-    
+    cpu: '2'
+    memory: '4Gi'
+
   signal-service:
-    cpu: "2"
-    memory: "4Gi"
-    
+    cpu: '2'
+    memory: '4Gi'
+
   scoring-service:
-    cpu: "2"
-    memory: "4Gi"
-    
+    cpu: '2'
+    memory: '4Gi'
+
   agent-engine:
-    cpu: "4"
-    memory: "8Gi"
+    cpu: '4'
+    memory: '8Gi'
 ```
 
 ## 3. 数据库配置规范
 
 ### 3.1 PostgreSQL配置
+
 ```sql
 -- 创建分区表
 CREATE TABLE agent_transactions (
@@ -183,18 +191,20 @@ CREATE INDEX idx_agent_transactions_composite ON agent_transactions(agent_id, po
 ```
 
 ### 3.2 MongoDB配置
+
 ```javascript
 // 分片配置
-sh.enableSharding("liqpro")
-sh.shardCollection("liqpro.agent_data", { agent_id: "hashed" })
+sh.enableSharding('liqpro');
+sh.shardCollection('liqpro.agent_data', { agent_id: 'hashed' });
 
 // 索引创建
-db.agent_data.createIndex({ agent_id: 1, timestamp: -1 })
-db.agent_data.createIndex({ pool_address: 1 })
-db.agent_data.createIndex({ "status.health_score": 1 })
+db.agent_data.createIndex({ agent_id: 1, timestamp: -1 });
+db.agent_data.createIndex({ pool_address: 1 });
+db.agent_data.createIndex({ 'status.health_score': 1 });
 ```
 
 ### 3.3 Redis配置
+
 ```conf
 # Redis配置
 maxmemory 6gb
@@ -209,29 +219,31 @@ appendfsync everysec
 ## 4. 安全实现规范
 
 ### 4.1 API认证
+
 ```typescript
 // JWT配置
 interface JWTConfig {
-  accessTokenExpiry: '2h',
-  refreshTokenExpiry: '7d',
-  algorithm: 'RS256',
-  issuer: 'liqpro-auth'
+  accessTokenExpiry: '2h';
+  refreshTokenExpiry: '7d';
+  algorithm: 'RS256';
+  issuer: 'liqpro-auth';
 }
 
 // API限流配置
 const rateLimits = {
   standard: {
     windowMs: 60 * 1000, // 1分钟
-    max: 60 // 限制60次
+    max: 60, // 限制60次
   },
   sensitive: {
     windowMs: 60 * 1000,
-    max: 10 // 限制10次
-  }
-}
+    max: 10, // 限制10次
+  },
+};
 ```
 
 ### 4.2 数据加密
+
 ```typescript
 // 加密配置
 const encryptionConfig = {
@@ -239,39 +251,41 @@ const encryptionConfig = {
   keyDerivation: {
     algorithm: 'pbkdf2',
     iterations: 10000,
-    hashLength: 32
+    hashLength: 32,
   },
   privateKeyStorage: {
     shards: 3,
-    threshold: 2
-  }
-}
+    threshold: 2,
+  },
+};
 ```
 
 ## 5. 监控配置规范
 
 ### 5.1 Prometheus指标
+
 ```yaml
 metrics:
   # 系统指标
   - name: cpu_usage_percent
     type: gauge
     labels: [service, instance]
-    
+
   - name: memory_usage_percent
     type: gauge
     labels: [service, instance]
-    
+
   # 业务指标
   - name: active_agents_count
     type: gauge
-    
+
   - name: trade_execution_time_seconds
     type: histogram
     buckets: [0.1, 0.5, 1, 2, 5]
 ```
 
 ### 5.2 日志配置
+
 ```yaml
 logging:
   # ELK配置
@@ -292,6 +306,7 @@ logging:
 ## 6. 开发规范
 
 ### 6.1 代码风格
+
 ```json
 {
   "extends": ["airbnb-base", "prettier"],
@@ -304,6 +319,7 @@ logging:
 ```
 
 ### 6.2 Git提交规范
+
 ```
 feat: 新功能
 fix: 修复bug
@@ -315,6 +331,7 @@ chore: 构建/工具链相关
 ```
 
 ### 6.3 分支管理
+
 ```
 main: 生产环境分支
 develop: 开发主分支
@@ -326,6 +343,7 @@ release/*: 发布分支
 ## 7. 错误处理规范
 
 ### 7.1 重试机制
+
 ```typescript
 const retryConfig = {
   maxAttempts: 3,
@@ -333,12 +351,13 @@ const retryConfig = {
   slippageAdjustment: {
     initial: 0.05, // 5%
     increment: 0.025, // 每次增加2.5%
-    maxSlippage: 0.10 // 最大10%
-  }
-}
+    maxSlippage: 0.1, // 最大10%
+  },
+};
 ```
 
 ### 7.2 网络故障处理
+
 ```typescript
 const networkConfig = {
   rpcNodes: {
@@ -346,19 +365,20 @@ const networkConfig = {
     backups: [
       'https://backup1-rpc.solana.com',
       'https://backup2-rpc.solana.com',
-      'https://backup3-rpc.solana.com'
+      'https://backup3-rpc.solana.com',
     ],
     switchThreshold: 2000, // 响应时间超过2秒触发切换
-    healthCheckInterval: 30000 // 30秒检查一次
+    healthCheckInterval: 30000, // 30秒检查一次
   },
   emergencyPause: {
     enabled: true,
-    conditions: ['NETWORK_CONGESTION', 'HIGH_ERROR_RATE']
-  }
-}
+    conditions: ['NETWORK_CONGESTION', 'HIGH_ERROR_RATE'],
+  },
+};
 ```
 
 ### 7.3 手动恢复机制
+
 ```typescript
 interface RecoveryOperation {
   retryTransaction: (txId: string) => Promise<boolean>;
@@ -370,18 +390,19 @@ interface RecoveryOperation {
 ## 8. 数据备份规范
 
 ### 8.1 备份策略
+
 ```yaml
 backup:
   transaction_data:
     type: real-time
     retention: infinite
     method: write-ahead-log
-  
+
   configuration:
     type: on-change
     retention: 90d
     method: snapshot
-    
+
   system_state:
     type: incremental
     interval: 5m
@@ -390,16 +411,17 @@ backup:
 ```
 
 ### 8.2 数据保留策略
+
 ```yaml
 retention:
   transaction_records:
     type: permanent
     storage: cold_storage
-    
+
   detailed_logs:
     duration: 90d
     archival: true
-    
+
   system_data:
     duration: 365d
     archival: true
@@ -407,6 +429,7 @@ retention:
 ```
 
 ### 8.3 跨区域备份配置
+
 ```yaml
 cross_region:
   enabled: true
@@ -424,20 +447,21 @@ cross_region:
 ## 9. 测试规范
 
 ### 9.1 测试环境要求
+
 ```yaml
 test_environments:
   testnet:
     rpc_nodes: 3
     data_sync: enabled
     monitoring: full
-    
+
   replay:
     data_source: mainnet
     time_range: 30d
     simulation_speed: 10x
-    
+
   load_test:
     agents: 200
     concurrent_ops: 1000
     duration: 168h # 7天
-``` 
+```

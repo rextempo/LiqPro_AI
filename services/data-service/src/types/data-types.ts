@@ -89,7 +89,7 @@ export interface StorageStats {
 export enum PriceSource {
   COINGECKO = 'coingecko',
   COINMARKETCAP = 'coinmarketcap',
-  JUPITER = 'jupiter'
+  JUPITER = 'jupiter',
 }
 
 /**
@@ -114,5 +114,5 @@ export enum TimePeriod {
   HOUR_12 = '12h',
   DAY_1 = '1d',
   WEEK_1 = '1w',
-  MONTH_1 = '1m'
-} 
+  MONTH_1 = '1m',
+}
