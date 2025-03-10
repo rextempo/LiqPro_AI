@@ -29,9 +29,9 @@ export function createLogger(namespace: string): Logger {
     },
     error: (message: string, meta: Record<string, any> = {}) => {
       console.error(`[ERROR] ${namespace}: ${message}`, meta);
-    }
+    },
   };
 }
 
 // 为了兼容性，也导出默认的logger实例
-export const logger = createLogger('default'); 
+export const logger = createLogger('default');
