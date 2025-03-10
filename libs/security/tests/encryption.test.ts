@@ -26,9 +26,9 @@ describe('Encryption System Tests', () => {
     it('should split and reconstruct key', async () => {
       const originalKey = await keySharingService.generateKey();
       const shares = await keySharingService.splitKey(originalKey, 5);
-      
+
       expect(shares.length).toBe(5);
-      
+
       // 使用3个分片重建密钥
       const reconstructedKey = await keySharingService.reconstructKey(shares.slice(0, 3));
       expect(reconstructedKey).toEqual(originalKey);
@@ -57,10 +57,9 @@ describe('Encryption System Tests', () => {
     it('should fail with insufficient shares', async () => {
       const originalKey = await keySharingService.generateKey();
       const shares = await keySharingService.splitKey(originalKey, 5);
-      
+
       // 使用2个分片尝试重建（应该失败，因为需要3个）
-      await expect(keySharingService.reconstructKey(shares.slice(0, 2)))
-        .rejects.toThrow();
+      await expect(keySharingService.reconstructKey(shares.slice(0, 2))).rejects.toThrow();
     });
   });
 
@@ -71,7 +70,7 @@ describe('Encryption System Tests', () => {
     it('should encrypt and decrypt data with password', async () => {
       const encrypted = await dataEncryptionService.encryptWithPassword(testData, password);
       expect(encrypted.data).not.toEqual(testData);
-      
+
       const decrypted = await dataEncryptionService.decryptWithPassword(encrypted, password);
       expect(decrypted).toEqual(testData);
     });
@@ -80,7 +79,7 @@ describe('Encryption System Tests', () => {
       const key = await keySharingService.generateKey();
       const encrypted = await dataEncryptionService.encryptWithKey(testData, key);
       expect(encrypted.data).not.toEqual(testData);
-      
+
       const decrypted = await dataEncryptionService.decryptWithKey(encrypted, key);
       expect(decrypted).toEqual(testData);
     });
@@ -89,7 +88,7 @@ describe('Encryption System Tests', () => {
       const { publicKey, privateKey } = await dataEncryptionService.generateKeyPair();
       const encrypted = await dataEncryptionService.encryptWithPublicKey(testData, publicKey);
       expect(encrypted).not.toEqual(testData);
-      
+
       const decrypted = await dataEncryptionService.decryptWithPrivateKey(encrypted, privateKey);
       expect(decrypted).toEqual(testData);
     });
@@ -97,10 +96,10 @@ describe('Encryption System Tests', () => {
     it('should sign and verify data', async () => {
       const { publicKey, privateKey } = await dataEncryptionService.generateKeyPair();
       const signature = await dataEncryptionService.sign(testData, privateKey);
-      
+
       const isValid = await dataEncryptionService.verify(testData, signature, publicKey);
       expect(isValid).toBe(true);
-      
+
       // 验证修改后的数据
       const modifiedData = Buffer.from('modified data');
       const isInvalid = await dataEncryptionService.verify(modifiedData, signature, publicKey);
@@ -113,7 +112,7 @@ describe('Encryption System Tests', () => {
       const certInfo = {
         commonName: 'localhost',
         organization: 'Test Org',
-        validityDays: 1
+        validityDays: 1,
       };
 
       const { certPath, keyPath } = await secureTransportService.generateSelfSignedCert(
@@ -133,16 +132,13 @@ describe('Encryption System Tests', () => {
       const certInfo = {
         commonName: 'localhost',
         organization: 'Test Org',
-        validityDays: 1
+        validityDays: 1,
       };
 
-      const { certPath } = await secureTransportService.generateSelfSignedCert(
-        testDir,
-        certInfo
-      );
+      const { certPath } = await secureTransportService.generateSelfSignedCert(testDir, certInfo);
 
       const isValid = await secureTransportService.verifyCertificateChain(certPath, []);
       expect(isValid).toBe(true);
     });
   });
-}); 
+});

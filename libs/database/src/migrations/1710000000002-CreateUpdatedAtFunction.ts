@@ -16,4 +16,4 @@ export class CreateUpdatedAtFunction1710000000002 implements MigrationInterface 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query('DROP FUNCTION IF EXISTS update_updated_at_column()');
   }
-} 
+}

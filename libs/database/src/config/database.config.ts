@@ -19,17 +19,20 @@ export const postgresConfig: DataSourceOptions = {
   migrations: ['src/migrations/*.ts'],
   synchronize: false,
   logging: process.env.NODE_ENV === 'development',
-  ssl: process.env.POSTGRES_SSL === 'true' ? {
-    rejectUnauthorized: false
-  } : false
+  ssl:
+    process.env.POSTGRES_SSL === 'true'
+      ? {
+          rejectUnauthorized: false,
+        }
+      : false,
 };
 
 // MongoDB配置
 export const mongoConfig = {
   url: process.env.MONGODB_URL || 'mongodb://admin:secret@localhost:27017/liqpro',
   options: {
-    useUnifiedTopology: true
-  } as MongoClientOptions
+    useUnifiedTopology: true,
+  } as MongoClientOptions,
 };
 
 // Redis配置
@@ -39,5 +42,5 @@ export const redisConfig = {
   password: process.env.REDIS_PASSWORD,
   db: parseInt(process.env.REDIS_DB || '0', 10),
   maxRetriesPerRequest: 3,
-  retryStrategy: (times: number) => Math.min(times * 50, 2000)
-}; 
+  retryStrategy: (times: number) => Math.min(times * 50, 2000),
+};

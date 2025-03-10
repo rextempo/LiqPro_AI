@@ -12,4 +12,4 @@ export async function generateToken(payload: TokenPayload): Promise<string> {
 
 export async function verifyToken(token: string): Promise<TokenPayload> {
   return jwt.verify(token, 'temporary-secret') as TokenPayload;
-} 
+}

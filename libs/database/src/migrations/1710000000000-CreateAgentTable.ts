@@ -98,4 +98,4 @@ export class CreateAgentTable1710000000000 implements MigrationInterface {
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.dropTable('agents');
   }
-} 
+}

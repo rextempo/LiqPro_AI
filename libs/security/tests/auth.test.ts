@@ -16,9 +16,9 @@ describe('Authentication System Tests', () => {
     redis = new Redis({
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT || '6379'),
-      password: process.env.REDIS_PASSWORD
+      password: process.env.REDIS_PASSWORD,
     });
-    
+
     jwtService = new JWTService();
     refreshTokenService = new RefreshTokenService(redis);
     rateLimiterService = new RateLimiterService(redis);
@@ -32,13 +32,13 @@ describe('Authentication System Tests', () => {
     const testPayload = {
       userId: '123',
       role: 'user',
-      sessionId: '456'
+      sessionId: '456',
     };
 
     it('should generate and verify access token', async () => {
       const token = await jwtService.generateAccessToken(testPayload);
       expect(token).toBeTruthy();
-      
+
       const decoded = await jwtService.verifyAccessToken(token);
       expect(decoded).toMatchObject(testPayload);
     });
@@ -46,14 +46,15 @@ describe('Authentication System Tests', () => {
     it('should generate and verify refresh token', async () => {
       const token = await jwtService.generateRefreshToken(testPayload);
       expect(token).toBeTruthy();
-      
+
       const decoded = await jwtService.verifyRefreshToken(token);
       expect(decoded).toMatchObject(testPayload);
     });
 
     it('should reject invalid tokens', async () => {
-      await expect(jwtService.verifyAccessToken('invalid-token'))
-        .rejects.toThrow('Invalid access token');
+      await expect(jwtService.verifyAccessToken('invalid-token')).rejects.toThrow(
+        'Invalid access token'
+      );
     });
   });
 
@@ -63,7 +64,7 @@ describe('Authentication System Tests', () => {
     it('should create and validate refresh token', async () => {
       const token = await refreshTokenService.createRefreshToken(userId);
       expect(token).toBeTruthy();
-      
+
       const validatedUserId = await refreshTokenService.validateRefreshToken(token);
       expect(validatedUserId).toBe(userId);
     });
@@ -71,7 +72,7 @@ describe('Authentication System Tests', () => {
     it('should revoke refresh token', async () => {
       const token = await refreshTokenService.createRefreshToken(userId);
       await refreshTokenService.revokeRefreshToken(token);
-      
+
       const validatedUserId = await refreshTokenService.validateRefreshToken(token);
       expect(validatedUserId).toBeNull();
     });
@@ -79,12 +80,12 @@ describe('Authentication System Tests', () => {
     it('should revoke all user tokens', async () => {
       const token1 = await refreshTokenService.createRefreshToken(userId);
       const token2 = await refreshTokenService.createRefreshToken(userId);
-      
+
       await refreshTokenService.revokeAllUserTokens(userId);
-      
+
       const valid1 = await refreshTokenService.validateRefreshToken(token1);
       const valid2 = await refreshTokenService.validateRefreshToken(token2);
-      
+
       expect(valid1).toBeNull();
       expect(valid2).toBeNull();
     });
@@ -94,8 +95,8 @@ describe('Authentication System Tests', () => {
     const identifier = 'test-client';
     const type = 'api';
     const config = {
-      windowSize: 1,  // 1 second
-      maxRequests: 2  // 2 requests per second
+      windowSize: 1, // 1 second
+      maxRequests: 2, // 2 requests per second
     };
 
     beforeEach(async () => {
@@ -124,10 +125,10 @@ describe('Authentication System Tests', () => {
       // 发送两个请求
       await rateLimiterService.isRateLimited(identifier, type, config);
       await rateLimiterService.isRateLimited(identifier, type, config);
-      
+
       // 等待窗口过期
       await sleep(1100);
-      
+
       // 新的请求应该被允许
       const result = await rateLimiterService.isRateLimited(identifier, type, config);
       expect(result.isLimited).toBe(false);
@@ -137,13 +138,13 @@ describe('Authentication System Tests', () => {
     it('should handle custom rate limits', async () => {
       const customConfig = {
         windowSize: 1,
-        maxRequests: 5
+        maxRequests: 5,
       };
 
       await rateLimiterService.createCustomLimit(type, customConfig);
       const retrievedConfig = await rateLimiterService.getCustomLimit(type);
-      
+
       expect(retrievedConfig).toMatchObject(customConfig);
     });
   });
-}); 
+});

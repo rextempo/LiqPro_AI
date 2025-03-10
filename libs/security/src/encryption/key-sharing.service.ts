@@ -29,7 +29,7 @@ export class KeySharingService {
 
     // 将密钥转换为bigint
     const secret = BigInt('0x' + key.toString('hex')) % this.prime;
-    
+
     // 生成两个随机系数 (因为阈值是3，所以需要二次多项式)
     const a1 = this.generateRandomCoefficient();
     const a2 = this.generateRandomCoefficient();
@@ -39,15 +39,11 @@ export class KeySharingService {
     // 为每个分片计算f(x) = secret + a1*x + a2*x^2
     for (let x = 1; x <= shares; x++) {
       const bigX = BigInt(x);
-      const value = (
-        secret + 
-        (a1 * bigX) + 
-        (a2 * bigX * bigX)
-      ) % this.prime;
+      const value = (secret + a1 * bigX + a2 * bigX * bigX) % this.prime;
 
       keyShares.push({
         index: x,
-        value: Buffer.from(value.toString(16).padStart(64, '0'), 'hex')
+        value: Buffer.from(value.toString(16).padStart(64, '0'), 'hex'),
       });
     }
 
@@ -63,14 +59,14 @@ export class KeySharingService {
     // 只使用前三个分片
     const points = shares.slice(0, 3).map(share => ({
       x: BigInt(share.index),
-      y: BigInt('0x' + share.value.toString('hex'))
+      y: BigInt('0x' + share.value.toString('hex')),
     }));
 
     // 构建线性方程组的系数矩阵
     const matrix = [
       [BigInt(1), points[0].x, points[0].x * points[0].x, points[0].y],
       [BigInt(1), points[1].x, points[1].x * points[1].x, points[1].y],
-      [BigInt(1), points[2].x, points[2].x * points[2].x, points[2].y]
+      [BigInt(1), points[2].x, points[2].x * points[2].x, points[2].y],
     ];
 
     // 高斯消元
@@ -86,7 +82,7 @@ export class KeySharingService {
         if (k !== i) {
           const factor = matrix[k][i];
           for (let j = i; j < 4; j++) {
-            matrix[k][j] = (matrix[k][j] - (factor * matrix[i][j])) % this.prime;
+            matrix[k][j] = (matrix[k][j] - factor * matrix[i][j]) % this.prime;
             if (matrix[k][j] < BigInt(0)) {
               matrix[k][j] += this.prime;
             }
@@ -135,19 +131,13 @@ export class KeySharingService {
     const key = crypto.scryptSync(password, salt, 32);
     const iv = randomBytes(16);
     const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-    
-    const shareData = Buffer.concat([
-      Buffer.from([share.index]),
-      share.value
-    ]);
-    
-    const encrypted = Buffer.concat([
-      cipher.update(shareData),
-      cipher.final()
-    ]);
-    
+
+    const shareData = Buffer.concat([Buffer.from([share.index]), share.value]);
+
+    const encrypted = Buffer.concat([cipher.update(shareData), cipher.final()]);
+
     const tag = cipher.getAuthTag();
-    
+
     return Buffer.concat([salt, iv, tag, encrypted]);
   }
 
@@ -157,19 +147,16 @@ export class KeySharingService {
     const iv = encryptedShare.slice(16, 32);
     const tag = encryptedShare.slice(32, 48);
     const data = encryptedShare.slice(48);
-    
+
     const key = crypto.scryptSync(password, salt, 32);
     const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
     decipher.setAuthTag(tag);
-    
-    const decrypted = Buffer.concat([
-      decipher.update(data),
-      decipher.final()
-    ]);
-    
+
+    const decrypted = Buffer.concat([decipher.update(data), decipher.final()]);
+
     return {
       index: decrypted[0],
-      value: decrypted.slice(1)
+      value: decrypted.slice(1),
     };
   }
-} 
+}

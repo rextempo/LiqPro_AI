@@ -156,4 +156,4 @@ export class CreateTransactionTable1710000000001 implements MigrationInterface {
     await queryRunner.query('DROP TYPE IF EXISTS transaction_type');
     await queryRunner.query('DROP TYPE IF EXISTS transaction_status');
   }
-} 
+}

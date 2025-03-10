@@ -27,66 +27,66 @@ export { postgresConfig, mongoConfig, redisConfig };
 
 // 初始化函数
 export async function initializeDatabase(): Promise<DatabaseServices> {
-    try {
-        // 初始化PostgreSQL连接
-        await postgresDataSource.initialize();
-        console.warn('PostgreSQL connection initialized');
+  try {
+    // 初始化PostgreSQL连接
+    await postgresDataSource.initialize();
+    console.warn('PostgreSQL connection initialized');
 
-        // 初始化MongoDB连接
-        await mongoClient.connect();
-        console.warn('MongoDB connection initialized');
+    // 初始化MongoDB连接
+    await mongoClient.connect();
+    console.warn('MongoDB connection initialized');
 
-        // Redis连接已在创建时自动初始化
-        console.warn('Redis connection initialized');
+    // Redis连接已在创建时自动初始化
+    console.warn('Redis connection initialized');
 
-        // 初始化服务
-        return DatabaseServices.initialize(postgresDataSource);
-    } catch (error) {
-        console.error('Error during database initialization:', error);
-        throw error;
-    }
+    // 初始化服务
+    return DatabaseServices.initialize(postgresDataSource);
+  } catch (error) {
+    console.error('Error during database initialization:', error);
+    throw error;
+  }
 }
 
 // 关闭函数
 export async function closeDatabase(): Promise<void> {
-    try {
-        await postgresDataSource.destroy();
-        await mongoClient.close();
-        await redisClient.quit();
-    } catch (error) {
-        console.error('Error during database shutdown:', error);
-        throw error;
-    }
+  try {
+    await postgresDataSource.destroy();
+    await mongoClient.close();
+    await redisClient.quit();
+  } catch (error) {
+    console.error('Error during database shutdown:', error);
+    throw error;
+  }
 }
 
 export interface HealthCheck {
-    status: 'ok' | 'error';
-    message: string;
+  status: 'ok' | 'error';
+  message: string;
 }
 
 export async function checkDatabaseConnection(): Promise<HealthCheck> {
-    try {
-        await postgresDataSource.query('SELECT 1');
-        await mongoClient.db().command({ ping: 1 });
-        await redisClient.ping();
-        
-        return {
-            status: 'ok',
-            message: 'Database connection successful'
-        };
-    } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        return {
-            status: 'error',
-            message: `Database connection failed: ${errorMessage}`
-        };
-    }
+  try {
+    await postgresDataSource.query('SELECT 1');
+    await mongoClient.db().command({ ping: 1 });
+    await redisClient.ping();
+
+    return {
+      status: 'ok',
+      message: 'Database connection successful',
+    };
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return {
+      status: 'error',
+      message: `Database connection failed: ${errorMessage}`,
+    };
+  }
 }
 
 // Error handling types
 export interface DatabaseError extends Error {
-    code?: string;
-    detail?: string;
+  code?: string;
+  detail?: string;
 }
 
 // Re-export TypeORM essentials
@@ -94,21 +94,21 @@ export { DataSource, Repository };
 
 // Error handling
 export function handleDatabaseError(error: unknown): DatabaseError {
-    const dbError: DatabaseError = {
-        name: 'DatabaseError',
-        message: 'An unknown database error occurred',
-    };
+  const dbError: DatabaseError = {
+    name: 'DatabaseError',
+    message: 'An unknown database error occurred',
+  };
 
-    if (error instanceof Error) {
-        dbError.message = error.message;
-        dbError.stack = error.stack;
-        if ('code' in error) {
-            dbError.code = (error as any).code;
-        }
-        if ('detail' in error) {
-            dbError.detail = (error as any).detail;
-        }
+  if (error instanceof Error) {
+    dbError.message = error.message;
+    dbError.stack = error.stack;
+    if ('code' in error) {
+      dbError.code = (error as any).code;
     }
+    if ('detail' in error) {
+      dbError.detail = (error as any).detail;
+    }
+  }
 
-    return dbError;
-} 
+  return dbError;
+}

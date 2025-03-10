@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreatePartitionedTables1710000000001 implements MigrationInterface {
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        // 创建分区表函数
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    // 创建分区表函数
+    await queryRunner.query(`
             CREATE OR REPLACE FUNCTION create_transaction_partition()
             RETURNS TRIGGER AS $$
             DECLARE
@@ -57,8 +57,8 @@ export class CreatePartitionedTables1710000000001 implements MigrationInterface 
             $$ LANGUAGE plpgsql;
         `);
 
-        // 创建分区表
-        await queryRunner.query(`
+    // 创建分区表
+    await queryRunner.query(`
             -- 创建新的分区表
             CREATE TABLE IF NOT EXISTS transactions_new (
                 LIKE transactions INCLUDING ALL
@@ -86,8 +86,8 @@ export class CreatePartitionedTables1710000000001 implements MigrationInterface 
             DROP TABLE transactions_old;
         `);
 
-        // 创建分区维护函数
-        await queryRunner.query(`
+    // 创建分区维护函数
+    await queryRunner.query(`
             CREATE OR REPLACE FUNCTION maintain_transaction_partitions()
             RETURNS void AS $$
             DECLARE
@@ -144,37 +144,37 @@ export class CreatePartitionedTables1710000000001 implements MigrationInterface 
             $$ LANGUAGE plpgsql;
         `);
 
-        // 创建定期维护作业
-        await queryRunner.query(`
+    // 创建定期维护作业
+    await queryRunner.query(`
             SELECT cron.schedule('maintain_transaction_partitions_job',
                                '0 0 1 * *',  -- 每月1日凌晨执行
                                'SELECT maintain_transaction_partitions()');
         `);
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        // 删除定期维护作业
-        await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    // 删除定期维护作业
+    await queryRunner.query(`
             SELECT cron.unschedule('maintain_transaction_partitions_job');
         `);
 
-        // 删除维护函数
-        await queryRunner.query(`
+    // 删除维护函数
+    await queryRunner.query(`
             DROP FUNCTION IF EXISTS maintain_transaction_partitions();
         `);
 
-        // 删除分区触发器和函数
-        await queryRunner.query(`
+    // 删除分区触发器和函数
+    await queryRunner.query(`
             DROP TRIGGER IF EXISTS transaction_partition_trigger ON transactions;
             DROP FUNCTION IF EXISTS create_transaction_partition();
         `);
 
-        // 创建临时表
-        await queryRunner.query(`
+    // 创建临时表
+    await queryRunner.query(`
             CREATE TABLE transactions_temp (LIKE transactions INCLUDING ALL);
             INSERT INTO transactions_temp SELECT * FROM transactions;
             DROP TABLE transactions;
             ALTER TABLE transactions_temp RENAME TO transactions;
         `);
-    }
-} 
+  }
+}

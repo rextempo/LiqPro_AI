@@ -19,31 +19,36 @@ export class JWTService {
     this.accessTokenSecret = process.env.JWT_ACCESS_SECRET || randomBytes(32).toString('hex');
     this.refreshTokenSecret = process.env.JWT_REFRESH_SECRET || randomBytes(32).toString('hex');
     // 将时间字符串转换为秒数
-    this.accessTokenExpiry = process.env.JWT_ACCESS_EXPIRY ? 
-      this.parseTimeToSeconds(process.env.JWT_ACCESS_EXPIRY) : 
-      15 * 60; // 默认15分钟
-    this.refreshTokenExpiry = process.env.JWT_REFRESH_EXPIRY ? 
-      this.parseTimeToSeconds(process.env.JWT_REFRESH_EXPIRY) : 
-      7 * 24 * 60 * 60; // 默认7天
+    this.accessTokenExpiry = process.env.JWT_ACCESS_EXPIRY
+      ? this.parseTimeToSeconds(process.env.JWT_ACCESS_EXPIRY)
+      : 15 * 60; // 默认15分钟
+    this.refreshTokenExpiry = process.env.JWT_REFRESH_EXPIRY
+      ? this.parseTimeToSeconds(process.env.JWT_REFRESH_EXPIRY)
+      : 7 * 24 * 60 * 60; // 默认7天
   }
 
   private parseTimeToSeconds(time: string): number {
     const unit = time.slice(-1);
     const value = parseInt(time.slice(0, -1));
-    
-    switch(unit) {
-      case 's': return value;
-      case 'm': return value * 60;
-      case 'h': return value * 60 * 60;
-      case 'd': return value * 24 * 60 * 60;
-      default: throw new Error('Invalid time unit. Use s, m, h, or d');
+
+    switch (unit) {
+      case 's':
+        return value;
+      case 'm':
+        return value * 60;
+      case 'h':
+        return value * 60 * 60;
+      case 'd':
+        return value * 24 * 60 * 60;
+      default:
+        throw new Error('Invalid time unit. Use s, m, h, or d');
     }
   }
 
   async generateAccessToken(payload: JWTPayload): Promise<string> {
     const options: SignOptions = {
       expiresIn: this.accessTokenExpiry,
-      algorithm: 'HS512'
+      algorithm: 'HS512',
     };
     return jwt.sign(payload, this.accessTokenSecret, options);
   }
@@ -51,7 +56,7 @@ export class JWTService {
   async generateRefreshToken(payload: JWTPayload): Promise<string> {
     const options: SignOptions = {
       expiresIn: this.refreshTokenExpiry,
-      algorithm: 'HS512'
+      algorithm: 'HS512',
     };
     return jwt.sign(payload, this.refreshTokenSecret, options);
   }
@@ -80,12 +85,12 @@ export class JWTService {
   }> {
     const [accessToken, refreshToken] = await Promise.all([
       this.generateAccessToken(payload),
-      this.generateRefreshToken(payload)
+      this.generateRefreshToken(payload),
     ]);
 
     return {
       accessToken,
-      refreshToken
+      refreshToken,
     };
   }
-} 
+}

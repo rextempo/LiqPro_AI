@@ -28,14 +28,14 @@ export class SecureTransportService {
     'TLS_CHACHA20_POLY1305_SHA256',
     'TLS_AES_128_GCM_SHA256',
     'ECDHE-RSA-AES256-GCM-SHA384',
-    'ECDHE-RSA-AES128-GCM-SHA256'
+    'ECDHE-RSA-AES128-GCM-SHA256',
   ].join(':');
 
   private readonly defaultConfig: Partial<TLSConfig> = {
     minVersion: 'TLSv1.2' as SecureVersion,
     maxVersion: 'TLSv1.3' as SecureVersion,
     rejectUnauthorized: true,
-    ciphers: this.defaultCiphers
+    ciphers: this.defaultCiphers,
   };
 
   // 创建TLS配置
@@ -48,20 +48,19 @@ export class SecureTransportService {
       maxVersion: config.maxVersion || this.defaultConfig.maxVersion,
       ciphers: config.ciphers || this.defaultConfig.ciphers,
       rejectUnauthorized: config.rejectUnauthorized ?? this.defaultConfig.rejectUnauthorized,
-      
+
       // 安全选项
-      honorCipherOrder: true,        // 使用服务器的密码套件优先级
-      sessionTimeout: 300,           // 会话超时时间（秒）
+      honorCipherOrder: true, // 使用服务器的密码套件优先级
+      sessionTimeout: 300, // 会话超时时间（秒）
       ticketKeys: tls.createSecureContext().context.getTicketKeys(), // 会话票据密钥
-      
+
       // 安全标头
-      secureOptions: (
+      secureOptions:
         constants.SSL_OP_NO_SSLv2 |
         constants.SSL_OP_NO_SSLv3 |
         constants.SSL_OP_NO_TLSv1 |
         constants.SSL_OP_NO_TLSv1_1 |
-        constants.SSL_OP_CIPHER_SERVER_PREFERENCE
-      )
+        constants.SSL_OP_CIPHER_SERVER_PREFERENCE,
     };
   }
 
@@ -92,7 +91,7 @@ export class SecureTransportService {
       ciphers: tlsConfig.ciphers,
       rejectUnauthorized: tlsConfig.rejectUnauthorized,
       honorCipherOrder: tlsConfig.honorCipherOrder,
-      sessionTimeout: tlsConfig.sessionTimeout
+      sessionTimeout: tlsConfig.sessionTimeout,
     };
 
     return tls.connect(connectionOptions);
@@ -129,22 +128,19 @@ export class SecureTransportService {
 
     return {
       certPath,
-      keyPath
+      keyPath,
     };
   }
 
   // 验证证书链
-  async verifyCertificateChain(
-    cert: string,
-    ca: string[]
-  ): Promise<boolean> {
+  async verifyCertificateChain(cert: string, ca: string[]): Promise<boolean> {
     try {
       const certData = fs.readFileSync(cert);
       const caData = ca.map(caPath => fs.readFileSync(caPath));
 
       tls.createSecureContext({
         cert: certData,
-        ca: caData
+        ca: caData,
       });
 
       // 如果创建上下文成功，证书链是有效的
@@ -182,7 +178,7 @@ export class SecureTransportService {
       issuer: issuerMatch[1].trim(),
       validFrom: validFromMatch[1].trim(),
       validTo: validToMatch[1].trim(),
-      fingerprint: fingerprintMatch ? fingerprintMatch[1].trim() : ''
+      fingerprint: fingerprintMatch ? fingerprintMatch[1].trim() : '',
     };
   }
-} 
+}
