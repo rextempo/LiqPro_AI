@@ -6,12 +6,12 @@ jest.mock('@meteora-ag/dlmm', () => {
         price: 100.5,
         binStep: 10,
         totalLiquidity: {
-          toString: () => '1000000'
-        }
+          toString: () => '1000000',
+        },
       }),
-      getAllPools: jest.fn().mockResolvedValue([
-        { toString: () => '8HoQnePLqPj4M7PUDzfw8e3Ymdwgc7NLGnaTUapubyvu' }
-      ]),
+      getAllPools: jest
+        .fn()
+        .mockResolvedValue([{ toString: () => '8HoQnePLqPj4M7PUDzfw8e3Ymdwgc7NLGnaTUapubyvu' }]),
       getBinArrays: jest.fn().mockResolvedValue([
         {
           publicKey: { toString: () => 'bin-array-1' },
@@ -20,12 +20,12 @@ jest.mock('@meteora-ag/dlmm', () => {
               index: 0,
               amountX: { toString: () => '100' },
               amountY: { toString: () => '200' },
-              liquiditySupply: { toString: () => '300' }
-            }
-          ]
-        }
-      ])
-    }))
+              liquiditySupply: { toString: () => '300' },
+            },
+          ],
+        },
+      ]),
+    })),
   };
 });
 
@@ -33,11 +33,11 @@ jest.mock('@meteora-ag/dlmm', () => {
 jest.mock('@solana/web3.js', () => {
   return {
     Connection: jest.fn().mockImplementation(() => ({
-      getLatestBlockhash: jest.fn().mockResolvedValue({})
+      getLatestBlockhash: jest.fn().mockResolvedValue({}),
     })),
-    PublicKey: jest.fn().mockImplementation((address) => ({
-      toString: () => address
-    }))
+    PublicKey: jest.fn().mockImplementation(address => ({
+      toString: () => address,
+    })),
   };
 });
 

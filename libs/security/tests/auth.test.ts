@@ -16,9 +16,9 @@ const isRedisAvailable = async () => {
       connectTimeout: 5000,
       maxRetriesPerRequest: 3,
       enableOfflineQueue: false,
-      lazyConnect: true
+      lazyConnect: true,
     });
-    
+
     await redis.connect();
     await redis.ping();
     await redis.quit();
@@ -39,7 +39,7 @@ describe('Authentication System Tests', () => {
   beforeAll(async () => {
     // 检查Redis是否可用
     redisAvailable = await isRedisAvailable();
-    
+
     // 创建Redis客户端，使用更健壮的配置
     redis = new Redis({
       host: process.env.REDIS_HOST || '127.0.0.1',
@@ -47,11 +47,11 @@ describe('Authentication System Tests', () => {
       password: process.env.REDIS_PASSWORD || '',
       connectTimeout: 10000,
       maxRetriesPerRequest: 3,
-      retryStrategy: (times) => {
+      retryStrategy: times => {
         if (times > 3) return null; // 超过3次重试后停止
         return Math.min(times * 200, 1000); // 指数退避策略
       },
-      enableOfflineQueue: false
+      enableOfflineQueue: false,
     });
 
     jwtService = new JWTService();
@@ -115,7 +115,7 @@ describe('Authentication System Tests', () => {
     it('should create and validate refresh token', async () => {
       // 如果Redis不可用，跳过测试
       if (!redisAvailable) return;
-      
+
       const token = await refreshTokenService.createRefreshToken(userId);
       expect(token).toBeTruthy();
 
@@ -126,7 +126,7 @@ describe('Authentication System Tests', () => {
     it('should revoke refresh token', async () => {
       // 如果Redis不可用，跳过测试
       if (!redisAvailable) return;
-      
+
       const token = await refreshTokenService.createRefreshToken(userId);
       await refreshTokenService.revokeRefreshToken(token);
 
@@ -137,7 +137,7 @@ describe('Authentication System Tests', () => {
     it('should revoke all user tokens', async () => {
       // 如果Redis不可用，跳过测试
       if (!redisAvailable) return;
-      
+
       const token1 = await refreshTokenService.createRefreshToken(userId);
       const token2 = await refreshTokenService.createRefreshToken(userId);
 
@@ -162,7 +162,7 @@ describe('Authentication System Tests', () => {
     beforeEach(async () => {
       // 如果Redis不可用，跳过测试
       if (!redisAvailable) return;
-      
+
       // 清理之前的测试数据
       try {
         await redis.del(`ratelimit:${type}:${identifier}`);
@@ -174,7 +174,7 @@ describe('Authentication System Tests', () => {
     it('should limit requests according to configuration', async () => {
       // 如果Redis不可用，跳过测试
       if (!redisAvailable) return;
-      
+
       // 第一个请求
       const result1 = await rateLimiterService.isRateLimited(identifier, type, config);
       expect(result1.isLimited).toBe(false);
@@ -194,7 +194,7 @@ describe('Authentication System Tests', () => {
     it('should reset limits after window expires', async () => {
       // 如果Redis不可用，跳过测试
       if (!redisAvailable) return;
-      
+
       // 发送两个请求
       await rateLimiterService.isRateLimited(identifier, type, config);
       await rateLimiterService.isRateLimited(identifier, type, config);
@@ -211,7 +211,7 @@ describe('Authentication System Tests', () => {
     it('should handle custom rate limits', async () => {
       // 如果Redis不可用，跳过测试
       if (!redisAvailable) return;
-      
+
       const customConfig = {
         windowSize: 1,
         maxRequests: 5,
