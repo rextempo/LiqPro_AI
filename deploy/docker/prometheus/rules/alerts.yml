@@ -1,0 +1,92 @@
+groups:
+  - name: LiqPro
+    rules:
+      # Service Health
+      - alert: ServiceDown
+        expr: up{job=~".*-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} has been down for more than 1 minute"
+
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{status_code=~"5.*"}[5m])) by (job) / sum(rate(http_requests_total[5m])) by (job) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate for {{ $labels.job }}"
+          description: "Service has a high HTTP error rate (> 5%)"
+
+      # High Latency
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, job)) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency for {{ $labels.job }}"
+          description: "95th percentile of request duration is above 1s"
+
+      # Memory Usage
+      - alert: HighMemoryUsage
+        expr: (process_resident_memory_bytes / (1024 * 1024 * 1024)) > 1.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage for {{ $labels.job }}"
+          description: "Memory usage is above 1.5GB"
+
+      # LP Pool Health
+      - alert: LPPoolHealthChange
+        expr: rate(lp_pool_health[1h]) > 0.2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Significant LP pool health change"
+          description: "LP pool health has changed by more than 20% in the last hour"
+
+      # Transaction Slippage
+      - alert: HighSlippage
+        expr: transaction_slippage > 0.015
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High transaction slippage"
+          description: "Transaction slippage is above 1.5%"
+
+      # Large LP Removal
+      - alert: LargeLPRemoval
+        expr: lp_removal_percentage > 0.1
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Large LP removal detected"
+          description: "More than 10% of LP has been removed"
+
+      # Token Price Volatility
+      - alert: HighPriceVolatility
+        expr: abs(rate(token_price[30m])) > 0.15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High token price volatility"
+          description: "Token price has changed by more than 15% in 30 minutes"
+
+      # Agent Inactivity
+      - alert: AgentInactivity
+        expr: time() - agent_last_operation > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Agent inactivity detected"
+          description: "Agent has been inactive for more than 5 minutes" 
