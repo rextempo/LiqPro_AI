@@ -25,7 +25,14 @@ describe('Authentication System Tests', () => {
   });
 
   afterAll(async () => {
-    await redis.quit();
+    // 确保Redis连接正确关闭
+    try {
+      await redis.quit();
+      // 强制断开连接
+      redis.disconnect();
+    } catch (error) {
+      console.error('Error closing Redis connection:', error);
+    }
   });
 
   describe('JWT Service', () => {

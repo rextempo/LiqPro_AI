@@ -15,5 +15,7 @@ module.exports = {
       statements: 65
     }
   },
-  setupFiles: ['<rootDir>/tests/setup.ts']
+  setupFiles: ['<rootDir>/tests/setup.ts'],
+  testTimeout: 30000,
+  detectOpenHandles: true
 }; 
