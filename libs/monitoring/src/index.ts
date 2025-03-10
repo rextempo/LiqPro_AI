@@ -1,4 +1,4 @@
-import { Registry, collectDefaultMetrics } from 'prom-client';
+import { Registry, collectDefaultMetrics, Histogram, Counter } from 'prom-client';
 import winston from 'winston';
 import { ElasticsearchTransport } from 'winston-elasticsearch';
 import { Request, Response, NextFunction } from 'express';
@@ -8,17 +8,19 @@ export const metricsRegistry = new Registry();
 collectDefaultMetrics({ register: metricsRegistry });
 
 // Custom metrics
-export const httpRequestDuration = new metricsRegistry.Histogram({
+export const httpRequestDuration = new Histogram({
   name: 'http_request_duration_seconds',
   help: 'Duration of HTTP requests in seconds',
   labelNames: ['service', 'method', 'route', 'status_code'],
   buckets: [0.1, 0.5, 1, 2, 5],
+  registers: [metricsRegistry],
 });
 
-export const httpRequestTotal = new metricsRegistry.Counter({
+export const httpRequestTotal = new Counter({
   name: 'http_requests_total',
   help: 'Total number of HTTP requests',
   labelNames: ['service', 'method', 'route', 'status_code'],
+  registers: [metricsRegistry],
 });
 
 // Create logger factory
@@ -84,7 +86,8 @@ export const createMetricsMiddleware = (serviceName: string) => {
 
 // Create error logging middleware factory
 export const createErrorLoggingMiddleware = (serviceName: string) => {
-  return (err: Error, req: Request, res: Response, next: NextFunction) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  return (err: Error, req: Request, _res: Response, next: NextFunction) => {
     const logger = createLogger(serviceName);
     logger.error('Error occurred', {
       error: {
