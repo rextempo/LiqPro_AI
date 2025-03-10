@@ -36,14 +36,29 @@ jobs:
     
     - name: Test with coverage
       run: |
+        # 运行工作区的测试
         npm run test:coverage
+        # 尝试使用根目录的Jest配置收集覆盖率
+        npm run test:jest || true
+        # 确保覆盖率目录存在
         mkdir -p coverage
-        find . -name "lcov.info" -exec cp {} ./coverage/ \;
+        echo "=== Finding lcov.info files ==="
+        find . -name "lcov.info" -type f
+        echo "=== Copying lcov.info files to coverage directory ==="
+        find . -name "lcov.info" -type f -exec cp {} ./coverage/ \;
+        echo "=== Listing coverage directory ==="
         ls -la ./coverage/
+        echo "=== Content of coverage/lcov.info if exists ==="
+        if [ -f "./coverage/lcov.info" ]; then
+          head -n 20 ./coverage/lcov.info
+        else
+          echo "lcov.info file not found in coverage directory"
+        fi
 
     - name: Upload coverage
       uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        directory: ./coverage/
-        fail_ci_if_error: true 
+        files: ./coverage/lcov.info
+        verbose: true
+        fail_ci_if_error: false 

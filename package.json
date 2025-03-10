@@ -18,6 +18,7 @@
     "format:check": "prettier --check \"**/*.{ts,json,md}\"",
     "test": "npm run test:coverage --workspaces --if-present",
     "test:coverage": "npm run test:coverage --workspaces --if-present",
+    "test:jest": "jest --coverage --config=jest.config.js",
     "prepare": "husky install"
   },
   "devDependencies": {
