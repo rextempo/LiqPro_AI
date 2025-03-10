@@ -2,6 +2,11 @@
   "name": "liqpro-monorepo",
   "version": "1.0.0",
   "private": true,
+  "description": "LiqPro - AI-driven investment platform for Meteora DLMM liquidity pools on Solana",
+  "versionInfo": {
+    "integrationTests": "v1.0.0-dlmm-test",
+    "lastUpdated": "2024-03-11"
+  },
   "workspaces": [
     "services/*",
     "libs/*"
@@ -19,7 +24,12 @@
     "test": "npm run test:coverage --workspaces --if-present",
     "test:coverage": "npm run test:coverage --workspaces --if-present",
     "test:jest": "jest --coverage --config=jest.config.js",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "integration:test": "cd tests/integration && node dlmm_test.js",
+    "integration:mock": "cd tests/integration && ./run_with_mock.sh",
+    "integration:real": "cd tests/integration && ./run_dlmm_test_against_real.sh",
+    "integration:metrics": "cd tests/integration && node collect_metrics.js",
+    "integration:report": "cd tests/integration && node collect_metrics.js report"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.0.0",
@@ -41,5 +51,11 @@
   "lint-staged": {
     "*.ts": "eslint --fix",
     "*.{json,md}": "prettier --write"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.73.0",
+    "axios": "^0.27.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
   }
 }

@@ -1,0 +1,21 @@
+{
+  "name": "liqpro-dlmm-integration-tests",
+  "version": "1.0.0",
+  "description": "Meteora DLMM池集成测试",
+  "main": "dlmm_test.js",
+  "scripts": {
+    "test": "node dlmm_test.js",
+    "test:mock": "./run_with_mock.sh",
+    "test:real": "./run_dlmm_test_against_real.sh",
+    "start:mock": "node mock_services.js",
+    "metrics": "node collect_metrics.js",
+    "metrics:process": "node collect_metrics.js process-logs",
+    "metrics:report": "node collect_metrics.js report"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.73.0",
+    "axios": "^0.27.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  }
+}

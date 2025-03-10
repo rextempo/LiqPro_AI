@@ -1,0 +1,22 @@
+FROM node:16-alpine
+
+WORKDIR /app
+
+# Install curl for healthchecks
+RUN apk --no-cache add curl
+
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Install testing dependencies
+RUN npm install --save-dev axios @solana/web3.js
+
+# Copy test files
+COPY tests/integration /app/tests/integration
+
+# Create output directory
+RUN mkdir -p /app/tests/integration/results
+
+# Set entrypoint to run tests
+CMD ["node", "tests/integration/signal_system_test.js"] 

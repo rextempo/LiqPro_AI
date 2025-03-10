@@ -1,0 +1,97 @@
+--- LiqPro Signal System Integration Test Log ---
+[2025-03-10T16:44:26.585Z] [+0.001s] [INFO] 开始连续测试，持续 30 秒
+[2025-03-10T16:44:26.586Z] [+0.002s] [INFO] 从Meteora API获取DLMM池地址
+[2025-03-10T16:44:35.467Z] [+8.883s] [INFO] 成功获取活跃DLMM池
+[]
+[2025-03-10T16:44:35.469Z] [+8.885s] [INFO] 测试将使用以下DLMM池
+[
+  'LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo',
+  'ARmSJaUxgKJExnYvVS91JiwxG7DTTaZh2JALiy2LCkxL',
+  '2QdhepnKRTLjjSqPL1PtKNwpWHEZ3yjUDzJGnXTVJS7s'
+]
+[2025-03-10T16:44:35.469Z] [+8.885s] [INFO] 
+===== 测试迭代 1 =====
+
+[2025-03-10T16:44:35.469Z] [+8.885s] [INFO] 开始 LiqPro 信号系统 DLMM 集成测试
+[2025-03-10T16:44:35.469Z] [+8.885s] [INFO] 测试配置
+{
+  dataServiceUrl: 'http://localhost:3375',
+  signalServiceUrl: 'http://localhost:4962',
+  scoringServiceUrl: 'http://localhost:5745',
+  solanaRpcUrl: 'https://soft-snowy-asphalt.solana-mainnet.quiknode.pro/48639631c6e4e81af5a0b8e228f6f9a0329154b7/',
+  meteoraApiUrl: 'https://dlmm-api.meteora.ag',
+  testPoolAddresses: [
+    'LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo',
+    'ARmSJaUxgKJExnYvVS91JiwxG7DTTaZh2JALiy2LCkxL',
+    '2QdhepnKRTLjjSqPL1PtKNwpWHEZ3yjUDzJGnXTVJS7s'
+  ],
+  fallbackPoolAddresses: [
+    'LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo',
+    'ARmSJaUxgKJExnYvVS91JiwxG7DTTaZh2JALiy2LCkxL',
+    '2QdhepnKRTLjjSqPL1PtKNwpWHEZ3yjUDzJGnXTVJS7s'
+  ],
+  testDuration: 30,
+  iterationDelay: 30000
+}
+[2025-03-10T16:44:35.470Z] [+8.886s] [INFO] 连接到 Solana: https://soft-snowy-asphalt.solana-mainnet.quiknode.pro/48639631c6e4e81af5a0b8e228f6f9a0329154b7/
+[2025-03-10T16:44:35.805Z] [+9.221s] [INFO] Solana 连接成功
+{ version: { 'feature-set': 3039680930, 'solana-core': '2.1.11' } }
+[2025-03-10T16:44:35.806Z] [+9.222s] [TEST] Starting test: 数据服务DLMM池测试
+[2025-03-10T16:44:35.806Z] [+9.222s] [INFO] 测试DLMM池列表获取
+[2025-03-10T16:44:35.816Z] [+9.232s] [INFO] 测试特定DLMM池数据: LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo
+[2025-03-10T16:44:35.818Z] [+9.234s] [INFO] 测试特定DLMM池数据: ARmSJaUxgKJExnYvVS91JiwxG7DTTaZh2JALiy2LCkxL
+[2025-03-10T16:44:35.820Z] [+9.236s] [INFO] 测试特定DLMM池数据: 2QdhepnKRTLjjSqPL1PtKNwpWHEZ3yjUDzJGnXTVJS7s
+[2025-03-10T16:44:35.821Z] [+9.237s] [INFO] 测试市场价格数据
+[2025-03-10T16:44:35.822Z] [+9.238s] [SUCCESS] Test 数据服务DLMM池测试: PASSED
+[2025-03-10T16:44:35.822Z] [+9.238s] [TEST] Starting test: 信号服务DLMM测试
+[2025-03-10T16:44:35.823Z] [+9.239s] [INFO] 测试市场分析
+[2025-03-10T16:44:35.825Z] [+9.241s] [INFO] 测试DLMM策略生成: LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo
+[2025-03-10T16:44:35.826Z] [+9.242s] [INFO] 测试DLMM策略生成: ARmSJaUxgKJExnYvVS91JiwxG7DTTaZh2JALiy2LCkxL
+[2025-03-10T16:44:35.827Z] [+9.243s] [INFO] 测试DLMM策略生成: 2QdhepnKRTLjjSqPL1PtKNwpWHEZ3yjUDzJGnXTVJS7s
+[2025-03-10T16:44:35.828Z] [+9.244s] [INFO] 测试回测功能: LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo
+[2025-03-10T16:44:35.836Z] [+9.252s] [SUCCESS] Test 信号服务DLMM测试: PASSED
+[2025-03-10T16:44:35.836Z] [+9.252s] [TEST] Starting test: 评分服务DLMM测试
+[2025-03-10T16:44:35.836Z] [+9.252s] [INFO] 测试健康评分: LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo
+[2025-03-10T16:44:35.838Z] [+9.254s] [INFO] 测试风险评估: LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo
+[2025-03-10T16:44:35.839Z] [+9.255s] [INFO] 测试推荐生成: LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo
+[2025-03-10T16:44:35.839Z] [+9.255s] [INFO] 测试健康评分: ARmSJaUxgKJExnYvVS91JiwxG7DTTaZh2JALiy2LCkxL
+[2025-03-10T16:44:35.840Z] [+9.256s] [INFO] 测试风险评估: ARmSJaUxgKJExnYvVS91JiwxG7DTTaZh2JALiy2LCkxL
+[2025-03-10T16:44:35.840Z] [+9.256s] [INFO] 测试推荐生成: ARmSJaUxgKJExnYvVS91JiwxG7DTTaZh2JALiy2LCkxL
+[2025-03-10T16:44:35.841Z] [+9.257s] [INFO] 测试健康评分: 2QdhepnKRTLjjSqPL1PtKNwpWHEZ3yjUDzJGnXTVJS7s
+[2025-03-10T16:44:35.841Z] [+9.257s] [INFO] 测试风险评估: 2QdhepnKRTLjjSqPL1PtKNwpWHEZ3yjUDzJGnXTVJS7s
+[2025-03-10T16:44:35.841Z] [+9.257s] [INFO] 测试推荐生成: 2QdhepnKRTLjjSqPL1PtKNwpWHEZ3yjUDzJGnXTVJS7s
+[2025-03-10T16:44:35.842Z] [+9.258s] [SUCCESS] Test 评分服务DLMM测试: PASSED
+[2025-03-10T16:44:35.842Z] [+9.258s] [TEST] Starting test: 端到端集成流程测试
+[2025-03-10T16:44:35.842Z] [+9.258s] [INFO] 选择测试池: LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo
+[2025-03-10T16:44:35.842Z] [+9.258s] [INFO] 获取池数据
+[2025-03-10T16:44:35.842Z] [+9.258s] [INFO] 获取市场分析
+[2025-03-10T16:44:35.843Z] [+9.259s] [INFO] 获取策略推荐
+[2025-03-10T16:44:35.843Z] [+9.259s] [INFO] 获取健康评分
+[2025-03-10T16:44:35.843Z] [+9.259s] [INFO] 获取风险评估
+[2025-03-10T16:44:35.844Z] [+9.260s] [INFO] 获取最终推荐
+[2025-03-10T16:44:35.844Z] [+9.260s] [INFO] 推荐有效性评估
+{ isValid: true, missingFields: [] }
+[2025-03-10T16:44:35.845Z] [+9.261s] [SUCCESS] Test 端到端集成流程测试: PASSED
+[2025-03-10T16:44:35.845Z] [+9.261s] [INFO] 测试结果摘要
+{
+  '数据服务': '通过',
+  '信号服务': '通过',
+  '评分服务': '通过',
+  '集成流程': '通过',
+  '整体结果': '通过'
+}
+[2025-03-10T16:44:35.845Z] [+9.261s] [INFO] 连续测试完成
+{ '总迭代次数': 1, '通过次数': 1, '失败次数': 0, '通过率': '100.00%' }
+
+==========================================================
+  LiqPro Signal System Integration Test Summary
+==========================================================
+  测试持续时间: 9.26 秒
+  信息日志数量: 38
+  警告日志数量: 0
+  错误日志数量: 0
+  调试日志数量: 0
+==========================================================
+  日志文件保存在: /Users/rex/Documents/LiqPro/tests/integration/logs/integration_test_2025-03-10T16-44-26-583Z.log
+  错误日志保存在: /Users/rex/Documents/LiqPro/tests/integration/logs/integration_test_errors_2025-03-10T16-44-26-583Z.log
+==========================================================
