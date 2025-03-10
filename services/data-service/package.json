@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "build": "tsc",
     "test": "jest --passWithNoTests",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
