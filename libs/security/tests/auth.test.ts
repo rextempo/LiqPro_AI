@@ -24,7 +24,8 @@ const isRedisAvailable = async () => {
     await redis.quit();
     return true;
   } catch (error) {
-    console.warn('Redis not available for testing:', error.message);
+    // 正确处理unknown类型的error
+    console.warn('Redis not available for testing:', error instanceof Error ? error.message : String(error));
     return false;
   }
 };
@@ -167,7 +168,8 @@ describe('Authentication System Tests', () => {
       try {
         await redis.del(`ratelimit:${type}:${identifier}`);
       } catch (error) {
-        console.warn('Failed to clean up test data:', error.message);
+        // 正确处理unknown类型的error
+        console.warn('Failed to clean up test data:', error instanceof Error ? error.message : String(error));
       }
     });
 

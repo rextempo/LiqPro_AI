@@ -9,9 +9,9 @@ jest.mock('@meteora-ag/dlmm', () => {
           toString: () => '1000000',
         },
       }),
-      getAllPools: jest.fn().mockResolvedValue([
-        { toString: () => '8HoQnePLqPj4M7PUDzfw8e3Ymdwgc7NLGnaTUapubyvu' },
-      ]),
+      getAllPools: jest
+        .fn()
+        .mockResolvedValue([{ toString: () => '8HoQnePLqPj4M7PUDzfw8e3Ymdwgc7NLGnaTUapubyvu' }]),
       getBinArrays: jest.fn().mockResolvedValue([
         {
           publicKey: { toString: () => 'bin-array-1' },
@@ -35,7 +35,7 @@ jest.mock('@solana/web3.js', () => {
     Connection: jest.fn().mockImplementation(() => ({
       getLatestBlockhash: jest.fn().mockResolvedValue({}),
     })),
-    PublicKey: jest.fn().mockImplementation((address) => ({
+    PublicKey: jest.fn().mockImplementation(address => ({
       toString: () => address,
     })),
   };
@@ -51,7 +51,8 @@ describe('MeteoraPoolCollector', () => {
   const TEST_TOKEN_X = 'So11111111111111111111111111111111111111112'; // SOL
   const TEST_TOKEN_Y = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'; // USDC
   // 使用提供的Solana RPC端点
-  const RPC_ENDPOINT = 'https://soft-snowy-asphalt.solana-mainnet.quiknode.pro/48639631c6e4e81af5a0b8e228f6f9a0329154b7/';
+  const RPC_ENDPOINT =
+    'https://soft-snowy-asphalt.solana-mainnet.quiknode.pro/48639631c6e4e81af5a0b8e228f6f9a0329154b7/';
 
   beforeAll(() => {
     // Initialize collector with provided RPC endpoint
