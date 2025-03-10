@@ -37,7 +37,7 @@ function getEnv(key, defaultValue) {
 }
 
 // 导出配置对象
-export const config = {
+const config = {
   // 应用程序配置
   app: {
     env: getEnv('NODE_ENV', 'development'),
@@ -58,9 +58,9 @@ export const config = {
   
   // Solana 配置
   solana: {
-    rpcEndpoint: getEnv('SOLANA_RPC_ENDPOINT', 'https://soft-snowy-asphalt.solana-mainnet.quiknode.pro/48639631c6e4e81af5a0b8e228f6f9a0329154b7/'),
-    wsEndpoint: getEnv('SOLANA_WS_ENDPOINT', ''),
-    commitment: getEnv('SOLANA_COMMITMENT', 'confirmed')
+    rpcEndpoint: getEnv('SOLANA_RPC_ENDPOINT', 'https://api.mainnet-beta.solana.com'),
+    wsEndpoint: getEnv('SOLANA_WS_ENDPOINT', 'wss://api.mainnet-beta.solana.com'),
+    commitment: 'confirmed'
   },
   
   // Meteora 配置
@@ -101,6 +101,15 @@ export const config = {
     apiKey: getEnv('API_KEY', ''),
     jwtSecret: getEnv('JWT_SECRET', ''),
     jwtExpiration: getEnv('JWT_EXPIRATION', '1d')
+  },
+  
+  // 信号配置
+  signal: {
+    updateInterval: parseInt(process.env.SIGNAL_UPDATE_INTERVAL || '300000', 10), // 5分钟
+    historyDays: parseInt(process.env.SIGNAL_HISTORY_DAYS || '14', 10),
+    maxT1Pools: parseInt(process.env.SIGNAL_MAX_T1_POOLS || '3', 10),
+    maxT2Pools: parseInt(process.env.SIGNAL_MAX_T2_POOLS || '5', 10),
+    maxT3Pools: parseInt(process.env.SIGNAL_MAX_T3_POOLS || '7', 10)
   }
 };
 
@@ -143,4 +152,6 @@ function validateConfig() {
 // 在非测试环境下验证配置
 if (process.env.NODE_ENV !== 'test') {
   validateConfig();
-} 
+}
+
+module.exports = { config }; 
