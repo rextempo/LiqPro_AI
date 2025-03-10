@@ -9,7 +9,9 @@
   "scripts": {
     "dev": "docker-compose -f deploy/docker/docker-compose.dev.yml up",
     "dev:build": "docker-compose -f deploy/docker/docker-compose.dev.yml up --build",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build:libs && npm run build:services",
+    "build:libs": "npm run build --workspace=@liqpro/common && npm run build --workspace=@liqpro/database && npm run build --workspace=@liqpro/monitoring && npm run build --workspace=@liqpro/security",
+    "build:services": "npm run build --workspace=@liqpro/agent-engine && npm run build --workspace=@liqpro/scoring-service && npm run build --workspace=@liqpro/signal-service && npm run build --workspace=@liqpro/data-service",
     "lint": "npm run lint --workspaces --if-present",
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "npm run format --workspaces --if-present",
