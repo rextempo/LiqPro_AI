@@ -39,6 +39,7 @@ export interface FundsStatus {
     valueUsd: number;
     valueSol: number;
   }[];
+  lastUpdate?: number;
 }
 
 // 风险评估接口
