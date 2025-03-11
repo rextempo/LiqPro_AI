@@ -1,13 +1,15 @@
 {
   "name": "@liqpro/agent-engine",
-  "version": "0.1.0",
+  "version": "0.4.1",
   "private": true,
   "scripts": {
-    "dev": "ts-node-dev --respawn src/index.ts",
+    "dev": "ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "jest --passWithNoTests",
-    "test:integration": "INTEGRATION_TEST=true jest --testPathPattern='tests/integration' --no-cache"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:integration": "INTEGRATION_TEST=true jest -t 'Integration'",
+    "lint": "eslint . --ext .ts"
   },
   "dependencies": {
     "@liqpro/common": "0.1.0",

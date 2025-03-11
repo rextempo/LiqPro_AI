@@ -5,7 +5,7 @@
   "description": "LiqPro - AI-driven investment platform for Meteora DLMM liquidity pools on Solana",
   "versionInfo": {
     "integrationTests": "v1.0.0-dlmm-test",
-    "lastUpdated": "2024-03-11"
+    "lastUpdated": "2025-03-11"
   },
   "workspaces": [
     "services/*",
@@ -29,7 +29,8 @@
     "integration:mock": "cd tests/integration && ./run_with_mock.sh",
     "integration:real": "cd tests/integration && ./run_dlmm_test_against_real.sh",
     "integration:metrics": "cd tests/integration && node collect_metrics.js",
-    "integration:report": "cd tests/integration && node collect_metrics.js report"
+    "integration:report": "cd tests/integration && node collect_metrics.js report",
+    "update-version": "node scripts/update-version.js"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.0.0",
@@ -38,6 +39,7 @@
     "@types/node": "^16.0.0",
     "@typescript-eslint/eslint-plugin": "5.62.0",
     "@typescript-eslint/parser": "5.62.0",
+    "date-fns": "4.1.0",
     "eslint": "8.57.0",
     "eslint-config-prettier": "8.10.0",
     "eslint-plugin-prettier": "4.2.1",
