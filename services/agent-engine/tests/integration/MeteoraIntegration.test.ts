@@ -1,5 +1,5 @@
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import { ConsoleLogger, LogLevel } from '../../src/utils/logger';
+import { ConsoleLogger, LogLevel, Logger } from '../../src/utils/logger';
 import { SolanaTransactionBuilder } from '../../src/core/SolanaTransactionBuilder';
 import { SolanaTransactionSigner } from '../../src/core/SolanaTransactionSigner';
 import { SolanaTransactionSender } from '../../src/core/SolanaTransactionSender';
@@ -39,12 +39,21 @@ const METEORA_TEST_CONFIG = {
 
 describe('Meteora DLMM Integration', () => {
   // 创建测试依赖
-  const logger = new ConsoleLogger(LogLevel.DEBUG);
+  const logger = {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+    child: jest.fn().mockReturnThis(),
+    module: 'MeteoraIntegration',
+    log: jest.fn()
+  } as unknown as Logger;
+
   const builder = new SolanaTransactionBuilder(logger);
   const signer = new SolanaTransactionSigner(logger);
   const sender = new SolanaTransactionSender(logger, [SOLANA_DEVNET_URL]);
   const transactionExecutor = new TransactionExecutor(signer, sender, builder, logger);
-  const fundsManager = new SolanaFundsManager(logger);
+  const fundsManager = new SolanaFundsManager(logger, SOLANA_DEVNET_URL);
   const riskController = new AgentRiskController(logger, transactionExecutor, fundsManager);
   
   // 使用预定义的测试钱包地址
@@ -55,10 +64,17 @@ describe('Meteora DLMM Integration', () => {
   const testConfig: AgentConfig = {
     name: 'MeteoraIntegrationTestAgent',
     walletAddress: testWalletAddress,
-    riskLevel: 'medium',
     maxPositions: 5,
     minSolBalance: 0.1,
-    emergencyThreshold: 1.5
+    targetHealthScore: 4.0,
+    riskTolerance: 'medium',
+    healthCheckIntervalMinutes: 5,
+    marketChangeCheckIntervalMinutes: 15,
+    optimizationIntervalHours: 24,
+    emergencyThresholds: {
+      minHealthScore: 2.0,
+      maxDrawdown: 0.2
+    }
   };
   
   // 测试状态机
@@ -74,7 +90,7 @@ describe('Meteora DLMM Integration', () => {
     signer.registerWallet(testWalletAddress, 'test_wallet_key');
     
     // 创建并注册状态机
-    stateMachine = new AgentStateMachine(testConfig);
+    stateMachine = new AgentStateMachine(testConfig, logger);
     stateMachine.handleEvent(AgentEvent.START);
     riskController.registerAgent(testAgentId, stateMachine);
     

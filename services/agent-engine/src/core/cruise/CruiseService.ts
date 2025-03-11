@@ -2,12 +2,47 @@ import { Logger } from '../../utils/logger';
 import { CruiseModule } from './CruiseModule';
 import { ScheduledTaskManager } from './ScheduledTaskManager';
 import { PositionOptimizer } from './PositionOptimizer';
-import { AgentStateMachine } from '../agent/AgentStateMachine';
-import { TransactionExecutor } from '../transaction/TransactionExecutor';
-import { FundsManager } from '../funds/FundsManager';
-import { RiskController } from '../risk/RiskController';
+import { AgentStateMachine } from '../AgentStateMachine';
+import { TransactionExecutor } from '../TransactionExecutor';
+import { FundsManager } from '../FundsManager';
+import { RiskController } from '../RiskController';
 import { config } from '../../config';
 import { CruiseMetrics } from './CruiseMetrics';
+import { PoolRecommendation, AgentConfig, AgentState, TransactionRequest, TransactionResult, FundsStatus } from '../../types';
+
+// Define the SignalService interface
+interface SignalService {
+  getSignal: () => Promise<any>;
+  getT1Pools: () => Promise<PoolRecommendation[]>;
+}
+
+// Define the AgentStateManager interface that extends AgentStateMachine
+interface AgentStateManager extends AgentStateMachine {
+  getActiveAgents(): Promise<Array<{id: string, config: AgentConfig}>>;
+  getAgentState(agentId: string): Promise<{state: AgentState, config: AgentConfig}>;
+}
+
+// Define the TransactionManager interface
+interface TransactionManager {
+  executeTransaction(request: TransactionRequest): Promise<TransactionResult>;
+}
+
+// Define the FundsStateManager interface
+interface FundsStateManager {
+  getFundsStatus(agentId: string, walletAddress: string): Promise<FundsStatus>;
+  checkTransactionLimit(agentId: string, amount: number, transactionType: string): Promise<boolean>;
+  updateFundsStatus(agentId: string, walletAddress: string, newStatus: Partial<FundsStatus>): Promise<FundsStatus>;
+  calculateReturns(agentId: string): Promise<{
+    totalReturns: number;
+    dailyReturns: number;
+    weeklyReturns: number;
+    monthlyReturns: number;
+  }>;
+  recordTransaction(agentId: string, amount: number, type: string): void;
+  getWalletBalance(walletAddress: string): Promise<number>;
+  checkFundsSafety(agentId: string): Promise<boolean>;
+  getAgentFunds(agentId: string): Promise<FundsStatus>;
+}
 
 /**
  * CruiseService - 自动巡航服务
@@ -23,9 +58,9 @@ export class CruiseService {
   private metrics: CruiseMetrics;
   
   // 依赖的服务
-  private agentStateMachine: AgentStateMachine;
-  private transactionExecutor: TransactionExecutor;
-  private fundsManager: FundsManager;
+  private agentStateMachine: AgentStateManager;
+  private transactionExecutor: TransactionManager;
+  private fundsManager: FundsStateManager;
   private riskController: RiskController;
   
   /**
@@ -33,9 +68,9 @@ export class CruiseService {
    */
   private constructor(
     logger: Logger,
-    agentStateMachine: AgentStateMachine,
-    transactionExecutor: TransactionExecutor,
-    fundsManager: FundsManager,
+    agentStateMachine: AgentStateManager,
+    transactionExecutor: TransactionManager,
+    fundsManager: FundsStateManager,
     riskController: RiskController
   ) {
     this.logger = logger.child({ module: 'CruiseService' });
@@ -55,9 +90,9 @@ export class CruiseService {
    */
   public static getInstance(
     logger: Logger,
-    agentStateMachine: AgentStateMachine,
-    transactionExecutor: TransactionExecutor,
-    fundsManager: FundsManager,
+    agentStateMachine: AgentStateManager,
+    transactionExecutor: TransactionManager,
+    fundsManager: FundsStateManager,
     riskController: RiskController
   ): CruiseService {
     if (!CruiseService.instance) {
@@ -105,6 +140,23 @@ export class CruiseService {
         getPoolRecommendations
       );
       
+      // Create signal service
+      const signalService: SignalService = {
+        getSignal: async () => {
+          // Implement signal service logic
+          return {
+            action: 'maintain',
+            healthScore: 4.0,
+            adjustmentPercentage: 0.0,
+            targetBins: []
+          };
+        },
+        getT1Pools: async () => {
+          // Implement T1 pools logic
+          return [];
+        }
+      };
+      
       // 创建巡航模块
       this.cruiseModule = new CruiseModule(
         this.logger,
@@ -112,8 +164,10 @@ export class CruiseService {
         this.transactionExecutor,
         this.fundsManager,
         this.riskController,
+        signalService,
         positionOptimizer,
-        taskManager
+        taskManager,
+        this.metrics
       );
       
       // 启动巡航模块

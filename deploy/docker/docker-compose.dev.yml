@@ -26,6 +26,7 @@ services:
       - ../../:/app
     ports:
       - "3002:3002"
+      - "3002:3002/udp"  # WebSocket
 
   scoring-service:
     build: 
@@ -52,6 +53,28 @@ services:
       - ../../:/app
     ports:
       - "3004:3004"
+
+  api-service:
+    build: 
+      context: ../../
+      dockerfile: services/api-service/Dockerfile
+    cpu_count: 2
+    mem_limit: 2g
+    environment:
+      - NODE_ENV=development
+      - DATA_SERVICE_URL=http://data-service:3001
+      - SIGNAL_SERVICE_URL=http://signal-service:3002
+      - SCORING_SERVICE_URL=http://scoring-service:3003
+      - AGENT_SERVICE_URL=http://agent-engine:3004
+    volumes:
+      - ../../:/app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - data-service
+      - signal-service
+      - scoring-service
+      - agent-engine
 
   redis:
     image: redis:6.2

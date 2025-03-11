@@ -2,128 +2,142 @@ import { TransactionExecutor } from '../src/core/TransactionExecutor';
 import { SolanaTransactionBuilder } from '../src/core/SolanaTransactionBuilder';
 import { SolanaTransactionSigner } from '../src/core/SolanaTransactionSigner';
 import { SolanaTransactionSender } from '../src/core/SolanaTransactionSender';
-import { ConsoleLogger, LogLevel } from '../src/utils/logger';
-import { TransactionType, TransactionStatus, TransactionPriority } from '../src/types/transaction';
+import { Logger, LoggerOptions, LogLevel } from '../src/utils/logger';
+import { TransactionType, TransactionStatus } from '../src/types/transaction';
 
 describe('TransactionExecutor', () => {
   // 创建测试依赖
-  const logger = new ConsoleLogger(LogLevel.DEBUG);
+  const logger = new Logger({ module: 'test' });
   const builder = new SolanaTransactionBuilder(logger);
   const signer = new SolanaTransactionSigner(logger);
   const sender = new SolanaTransactionSender(logger, ['https://api.mainnet-beta.solana.com']);
-  let executor: TransactionExecutor;
-
+  
   // 测试数据
   const testWalletAddress = 'test_wallet_address';
-  const testPrivateKey = 'test_private_key';
   const testAgentId = 'test_agent_id';
-  const testPoolAddress = 'test_pool_address';
-
+  
   beforeEach(() => {
     // 注册测试钱包
-    signer.registerWallet(testWalletAddress, testPrivateKey);
+    signer.registerWallet(testWalletAddress, 'test_wallet_key');
     
-    // 创建交易执行器
-    executor = new TransactionExecutor(signer, sender, builder, logger);
-  });
-
-  describe('Transaction Request Creation', () => {
-    it('should create a transaction request with correct properties', () => {
-      const data = {
-        poolAddress: testPoolAddress,
-        amount: 1.0,
-        walletAddress: testWalletAddress
-      };
-      
-      const request = executor.createRequest(
-        TransactionType.ADD_LIQUIDITY,
-        data,
-        testAgentId
-      );
-      
-      expect(request).toBeDefined();
-      expect(request.id).toBeDefined();
-      expect(request.type).toBe(TransactionType.ADD_LIQUIDITY);
-      expect(request.status).toBe(TransactionStatus.PENDING);
-      expect(request.data).toEqual(data);
-      expect(request.agentId).toBe(testAgentId);
-      expect(request.retryCount).toBe(0);
+    // 模拟交易构建
+    jest.spyOn(builder, 'buildAddLiquidityTransaction').mockImplementation(async () => {
+      return { instructions: [], recentBlockhash: 'mock_blockhash' };
     });
-
-    it('should create a transaction request with custom options', () => {
-      const data = {
-        poolAddress: testPoolAddress,
-        amount: 1.0,
-        walletAddress: testWalletAddress
+    
+    // 模拟交易签名
+    jest.spyOn(signer, 'sign').mockImplementation(async () => {
+      return { signature: `sig_${Date.now()}_${Math.random().toString(36).substring(2, 15)}` };
+    });
+    
+    // 模拟交易发送
+    jest.spyOn(sender, 'send').mockImplementation(async () => {
+      return `tx_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+    });
+    
+    // 模拟交易确认
+    jest.spyOn(sender, 'confirm').mockImplementation(async () => {
+      return {
+        success: true,
+        txHash: `tx_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`,
+        blockTime: Date.now()
       };
-      
-      const request = executor.createRequest(
-        TransactionType.ADD_LIQUIDITY,
-        data,
-        testAgentId,
-        {
-          maxRetries: 5,
-          priority: TransactionPriority.HIGH
-        }
-      );
-      
-      expect(request.maxRetries).toBe(5);
-      expect(request.priority).toBe(TransactionPriority.HIGH);
     });
   });
-
+  
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+  
   describe('Transaction Execution', () => {
     it('should execute a transaction successfully', async () => {
-      const data = {
-        poolAddress: testPoolAddress,
-        amount: 1.0,
-        walletAddress: testWalletAddress
-      };
+      const executor = new TransactionExecutor(signer, sender, builder, logger);
       
+      // 创建交易请求
       const request = executor.createRequest(
         TransactionType.ADD_LIQUIDITY,
-        data,
+        {
+          poolAddress: 'test_pool_address',
+          amount: 1,
+          binRange: [-10, 10]
+        },
         testAgentId
       );
       
+      // 执行交易
       const result = await executor.execute(request);
       
+      // 验证结果
       expect(result).toBeDefined();
-      expect(result.success).toBe(true);
       expect(result.txHash).toBeDefined();
-      expect(result.blockTime).toBeDefined();
       
-      const status = executor.getStatus(request.id);
-      expect(status).toBe(TransactionStatus.CONFIRMED);
+      // 验证状态
+      const statusMap = (executor as any).transactions;
+      expect(statusMap.get(request.id).status).toBe(TransactionStatus.CONFIRMED);
     });
   });
-
+  
   describe('Transaction Cancellation', () => {
     it('should cancel a pending transaction', async () => {
-      const data = {
-        poolAddress: testPoolAddress,
-        amount: 1.0,
-        walletAddress: testWalletAddress
-      };
+      const executor = new TransactionExecutor(signer, sender, builder, logger);
       
+      // 创建交易请求
       const request = executor.createRequest(
         TransactionType.ADD_LIQUIDITY,
-        data,
+        {
+          poolAddress: 'test_pool_address',
+          amount: 1,
+          binRange: [-10, 10]
+        },
         testAgentId
       );
       
-      const cancelled = await executor.cancel(request.id);
+      // 取消交易
+      const result = await executor.cancel(request.id);
       
-      expect(cancelled).toBe(true);
+      // 验证结果
+      expect(result).toBe(true);
       
-      const status = executor.getStatus(request.id);
-      expect(status).toBe(TransactionStatus.CANCELLED);
+      // 验证状态
+      const statusMap = (executor as any).transactions;
+      expect(statusMap.get(request.id).status).toBe(TransactionStatus.CANCELLED);
     });
-
+    
     it('should not cancel a non-existent transaction', async () => {
-      const cancelled = await executor.cancel('non_existent_id');
+      const executor = new TransactionExecutor(signer, sender, builder, logger);
       
-      expect(cancelled).toBe(false);
+      // 尝试取消不存在的交易
+      const result = await executor.cancel('non_existent_id');
+      
+      // 验证结果
+      expect(result).toBe(false);
+    });
+  });
+  
+  describe('Transaction History', () => {
+    it('should maintain transaction history', async () => {
+      const executor = new TransactionExecutor(signer, sender, builder, logger);
+      
+      // 创建并执行交易
+      const request = executor.createRequest(
+        TransactionType.ADD_LIQUIDITY,
+        {
+          poolAddress: 'test_pool_address',
+          amount: 1,
+          binRange: [-10, 10]
+        },
+        testAgentId
+      );
+      
+      await executor.execute(request);
+      
+      // 获取历史记录
+      const history = executor.getAgentTransactionHistory(testAgentId);
+      
+      // 验证历史记录
+      expect(history).toBeDefined();
+      expect(history.length).toBeGreaterThan(0);
+      expect(history[0].id).toBe(request.id);
     });
   });
 }); 

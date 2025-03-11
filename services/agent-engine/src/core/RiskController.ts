@@ -250,40 +250,71 @@ export class AgentRiskController implements RiskController {
         stateMachine.getStatus().config.walletAddress
       );
       
-      // 创建紧急退出交易
-      const poolAddresses = fundsStatus.positions.map(p => p.poolAddress);
-      
-      if (poolAddresses.length === 0) {
-        this.logger.info(`No positions to exit for agent ${agentId}`);
+      // 如果没有活跃仓位，直接返回成功
+      if (fundsStatus.positions.length === 0) {
+        this.logger.info(`No active positions for agent ${agentId}, emergency exit completed`);
         return true;
       }
       
-      // 创建交易请求
-      const request = this.transactionExecutor.createRequest(
-        TransactionType.EMERGENCY_EXIT,
-        {
-          poolAddresses,
-          walletAddress: stateMachine.getStatus().config.walletAddress
-        },
-        agentId,
-        {
-          priority: TransactionPriority.CRITICAL,
-          maxRetries: 5
+      // 按优先级处理每个仓位
+      for (const position of fundsStatus.positions) {
+        try {
+          // 移除LP仓位
+          const removeLpResult = await this.transactionExecutor.executeTransaction({
+            agentId,
+            type: TransactionType.REMOVE_LIQUIDITY,
+            priority: TransactionPriority.CRITICAL,
+            data: {
+              poolAddress: position.poolAddress,
+              percentage: 100 // 完全移除
+            }
+          });
+          
+          if (!removeLpResult.success) {
+            throw new Error(`Failed to remove LP position: ${removeLpResult.error}`);
+          }
+          
+          // 等待一段时间确保交易确认
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // 将获得的代币换回SOL
+          const swapResult = await this.transactionExecutor.executeTransaction({
+            agentId,
+            type: TransactionType.SWAP_TO_SOL,
+            priority: TransactionPriority.CRITICAL,
+            data: {
+              poolAddress: position.poolAddress,
+              maxSlippage: 5.0 // 紧急情况下接受更高滑点
+            }
+          });
+          
+          if (!swapResult.success) {
+            throw new Error(`Failed to swap tokens to SOL: ${swapResult.error}`);
+          }
+        } catch (error: any) {
+          this.logger.error(`Failed to process position ${position.poolAddress} during emergency exit: ${error.message}`);
+          // 继续处理其他仓位
         }
+      }
+      
+      // 再次检查资金状态
+      const finalStatus = await this.fundsManager.getFundsStatus(
+        agentId,
+        stateMachine.getStatus().config.walletAddress
       );
       
-      // 执行交易
-      const result = await this.transactionExecutor.execute(request);
+      // 验证是否所有仓位都已清空
+      const success = finalStatus.positions.length === 0;
       
-      if (result.success) {
-        this.logger.info(`Emergency exit successful for agent ${agentId}`);
-        return true;
+      if (success) {
+        this.logger.info(`Emergency exit completed successfully for agent ${agentId}`);
       } else {
-        this.logger.error(`Emergency exit failed for agent ${agentId}: ${result.error}`);
-        return false;
+        this.logger.error(`Emergency exit partially failed for agent ${agentId}, ${finalStatus.positions.length} positions remaining`);
       }
+      
+      return success;
     } catch (error: any) {
-      this.logger.error(`Failed to execute emergency exit for agent ${agentId}: ${error.message}`);
+      this.logger.error(`Emergency exit failed for agent ${agentId}: ${error.message}`);
       return false;
     }
   }
@@ -292,7 +323,7 @@ export class AgentRiskController implements RiskController {
    * 执行部分减仓
    */
   public async executePartialReduction(agentId: string, percentage: number): Promise<boolean> {
-    this.logger.info(`Executing partial reduction (${percentage * 100}%) for agent ${agentId}`);
+    this.logger.info(`Executing partial reduction (${percentage}%) for agent ${agentId}`);
     
     try {
       // 获取Agent状态机
@@ -308,47 +339,94 @@ export class AgentRiskController implements RiskController {
         stateMachine.getStatus().config.walletAddress
       );
       
-      // 如果没有仓位，则无需减仓
+      // 如果没有活跃仓位，直接返回成功
       if (fundsStatus.positions.length === 0) {
-        this.logger.info(`No positions to reduce for agent ${agentId}`);
+        this.logger.info(`No active positions for agent ${agentId}, partial reduction completed`);
         return true;
       }
       
-      // 对每个仓位执行部分减仓
-      let allSuccess = true;
+      // 计算每个仓位需要减少的数量
+      const reductionAmount = percentage / 100;
       
-      for (const position of fundsStatus.positions) {
-        // 计算减仓金额
-        const reductionAmount = position.valueSol * percentage;
-        
-        // 创建交易请求
-        const request = this.transactionExecutor.createRequest(
-          TransactionType.REMOVE_LIQUIDITY,
-          {
-            poolAddress: position.poolAddress,
-            amount: reductionAmount,
-            walletAddress: stateMachine.getStatus().config.walletAddress
-          },
-          agentId,
-          {
+      // 按风险从高到低排序仓位
+      const sortedPositions = await this.sortPositionsByRisk(fundsStatus.positions);
+      
+      // 处理每个仓位
+      for (const position of sortedPositions) {
+        try {
+          // 移除部分LP
+          const removeLpResult = await this.transactionExecutor.executeTransaction({
+            agentId,
+            type: TransactionType.REMOVE_LIQUIDITY,
             priority: TransactionPriority.HIGH,
-            maxRetries: 3
+            data: {
+              poolAddress: position.poolAddress,
+              percentage: reductionAmount * 100
+            }
+          });
+          
+          if (!removeLpResult.success) {
+            throw new Error(`Failed to remove LP position: ${removeLpResult.error}`);
           }
-        );
-        
-        // 执行交易
-        const result = await this.transactionExecutor.execute(request);
-        
-        if (!result.success) {
-          this.logger.error(`Partial reduction failed for position ${position.poolAddress}: ${result.error}`);
-          allSuccess = false;
+          
+          // 等待交易确认
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // 将获得的代币换回SOL
+          const swapResult = await this.transactionExecutor.executeTransaction({
+            agentId,
+            type: TransactionType.SWAP_TO_SOL,
+            priority: TransactionPriority.HIGH,
+            data: {
+              poolAddress: position.poolAddress,
+              maxSlippage: 2.0 // 部分减仓可以接受较低滑点
+            }
+          });
+          
+          if (!swapResult.success) {
+            throw new Error(`Failed to swap tokens to SOL: ${swapResult.error}`);
+          }
+        } catch (error: any) {
+          this.logger.error(`Failed to process position ${position.poolAddress} during partial reduction: ${error.message}`);
+          // 继续处理其他仓位
         }
       }
       
-      return allSuccess;
+      // 验证减仓结果
+      const finalStatus = await this.fundsManager.getFundsStatus(
+        agentId,
+        stateMachine.getStatus().config.walletAddress
+      );
+      
+      // 计算总价值变化
+      const initialValue = fundsStatus.totalValueSol;
+      const finalValue = finalStatus.totalValueSol;
+      const actualReduction = (initialValue - finalValue) / initialValue;
+      
+      // 允许5%的误差
+      const success = Math.abs(actualReduction - reductionAmount) <= 0.05;
+      
+      if (success) {
+        this.logger.info(`Partial reduction completed successfully for agent ${agentId}, reduced by ${(actualReduction * 100).toFixed(2)}%`);
+      } else {
+        this.logger.warn(`Partial reduction completed with deviation for agent ${agentId}, target: ${(reductionAmount * 100).toFixed(2)}%, actual: ${(actualReduction * 100).toFixed(2)}%`);
+      }
+      
+      return success;
     } catch (error: any) {
-      this.logger.error(`Failed to execute partial reduction for agent ${agentId}: ${error.message}`);
+      this.logger.error(`Partial reduction failed for agent ${agentId}: ${error.message}`);
       return false;
     }
+  }
+
+  /**
+   * 按风险从高到低排序仓位
+   */
+  private async sortPositionsByRisk(positions: Array<{ poolAddress: string; valueUsd: number; valueSol: number }>): Promise<Array<{ poolAddress: string; valueUsd: number; valueSol: number }>> {
+    // 这里应该实现实际的风险排序逻辑
+    // 可以从信号系统获取每个池子的风险评分
+    
+    // 临时实现：按价值排序（价值越高风险越大）
+    return [...positions].sort((a, b) => b.valueUsd - a.valueUsd);
   }
 } 

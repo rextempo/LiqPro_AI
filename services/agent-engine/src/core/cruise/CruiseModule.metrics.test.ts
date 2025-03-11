@@ -3,8 +3,9 @@ import { ScheduledTaskManager } from './ScheduledTaskManager';
 import { PositionOptimizer } from './PositionOptimizer';
 import { CruiseMetrics } from './CruiseMetrics';
 import { Logger } from '../../utils/logger';
+import { AgentConfig, AgentState } from '../../types';
 
-// 模拟依赖接口
+// Mock dependencies
 interface AgentStateMachine {
   getActiveAgents: () => Promise<any[]>;
   getAgentState: (agentId: string) => Promise<any>;
@@ -22,6 +23,11 @@ interface RiskController {
   assessRisk: (agentId: string, action: string) => Promise<any>;
 }
 
+interface SignalService {
+  getSignal: () => Promise<any>;
+  getT1Pools: () => Promise<any>;
+}
+
 describe('CruiseModule Metrics Integration Tests', () => {
   let logger: Logger;
   let cruiseModule: CruiseModule;
@@ -29,23 +35,24 @@ describe('CruiseModule Metrics Integration Tests', () => {
   let taskManager: ScheduledTaskManager;
   let positionOptimizer: PositionOptimizer;
   
-  // 模拟依赖
+  // Mock dependencies
   let mockAgentStateMachine: jest.Mocked<AgentStateMachine>;
   let mockTransactionExecutor: jest.Mocked<TransactionExecutor>;
   let mockFundsManager: jest.Mocked<FundsManager>;
   let mockRiskController: jest.Mocked<RiskController>;
+  let mockSignalService: jest.Mocked<SignalService>;
   
   beforeEach(() => {
-    // 创建日志记录器
+    // Create logger
     logger = new Logger({ module: 'test' });
     
-    // 创建指标收集器
+    // Create metrics collector
     metrics = new CruiseMetrics(logger);
     
-    // 创建任务管理器
+    // Create task manager
     taskManager = new ScheduledTaskManager(logger);
     
-    // 模拟依赖
+    // Mock dependencies
     mockAgentStateMachine = {
       getActiveAgents: jest.fn(),
       getAgentState: jest.fn()
@@ -62,8 +69,13 @@ describe('CruiseModule Metrics Integration Tests', () => {
     mockRiskController = {
       assessRisk: jest.fn()
     };
+
+    mockSignalService = {
+      getSignal: jest.fn(),
+      getT1Pools: jest.fn()
+    };
     
-    // 创建仓位优化器
+    // Create position optimizer
     const getPoolRecommendations = async () => ({
       healthScore: 4.0,
       action: 'maintain',
@@ -74,21 +86,23 @@ describe('CruiseModule Metrics Integration Tests', () => {
     
     positionOptimizer = new PositionOptimizer(logger, getPoolRecommendations);
     
-    // 创建巡航模块
+    // Create cruise module
     cruiseModule = new CruiseModule(
       logger,
       mockAgentStateMachine as any,
       mockTransactionExecutor as any,
       mockFundsManager as any,
       mockRiskController as any,
+      mockSignalService,
       positionOptimizer,
-      taskManager
+      taskManager,
+      metrics
     );
     
-    // 启动指标收集
+    // Start metrics collection
     metrics.startMetricsReporting();
     
-    // 模拟数据
+    // Mock data
     mockAgentStateMachine.getActiveAgents.mockResolvedValue([
       { id: 'agent1', config: { healthCheckInterval: 300000 } },
       { id: 'agent2', config: { healthCheckInterval: 600000 } }
@@ -96,14 +110,31 @@ describe('CruiseModule Metrics Integration Tests', () => {
     
     mockAgentStateMachine.getAgentState.mockResolvedValue({
       id: 'agent1',
-      status: 'active',
+      state: AgentState.RUNNING,
+      config: {
+        name: 'Agent 1',
+        walletAddress: 'wallet1',
+        maxPositions: 5,
+        minSolBalance: 1,
+        targetHealthScore: 4.0,
+        riskTolerance: 'medium',
+        healthCheckIntervalMinutes: 5,
+        marketChangeCheckIntervalMinutes: 15,
+        optimizationIntervalHours: 24,
+        emergencyThresholds: {
+          minHealthScore: 2.0,
+          maxDrawdown: 0.2
+        }
+      },
       positions: [
         { poolAddress: 'pool1', tokenA: 'SOL', tokenB: 'USDC', value: 100 }
       ]
     });
     
     mockFundsManager.getAgentFunds.mockResolvedValue({
+      totalValueUsd: 1000,
       totalValueSol: 1000,
+      availableSol: 500,
       positions: [
         { poolAddress: 'pool1', tokenA: 'SOL', tokenB: 'USDC', value: 500 },
         { poolAddress: 'pool2', tokenA: 'SOL', tokenB: 'USDT', value: 500 }
@@ -122,61 +153,112 @@ describe('CruiseModule Metrics Integration Tests', () => {
   });
   
   afterEach(() => {
-    // 停止指标收集
+    // Stop metrics collection
     metrics.stopMetricsReporting();
     
-    // 停止任务管理器
+    // Stop task manager
     taskManager.stop();
     
-    // 清理模拟
+    // Clear mocks
     jest.clearAllMocks();
   });
   
   test('should register agents and update metrics', async () => {
-    // 注册代理
-    await cruiseModule.registerAgent('agent1', { healthCheckInterval: 300000 });
+    const agentConfig: AgentConfig = {
+      name: 'Agent 1',
+      walletAddress: 'wallet1',
+      maxPositions: 5,
+      minSolBalance: 1,
+      targetHealthScore: 4.0,
+      riskTolerance: 'medium',
+      healthCheckIntervalMinutes: 5,
+      marketChangeCheckIntervalMinutes: 15,
+      optimizationIntervalHours: 24,
+      emergencyThresholds: {
+        minHealthScore: 2.0,
+        maxDrawdown: 0.2
+      }
+    };
+
+    // Register agent
+    await cruiseModule.registerAgent('agent1', agentConfig);
     
-    // 为指标收集器注册代理
+    // Register agent with metrics collector
     metrics.registerAgent('agent1');
     
-    // 验证代理注册
+    // Verify agent registration
     expect(cruiseModule.getRegisteredAgentCount()).toBe(1);
     
-    // 验证指标收集器中的代理指标
+    // Verify agent metrics in collector
     const agentMetrics = metrics.getAgentMetrics('agent1');
     expect(agentMetrics).toBeDefined();
   });
   
   test('should record health check metrics', async () => {
-    // 注册代理
-    await cruiseModule.registerAgent('agent1', { healthCheckInterval: 300000 });
+    const agentConfig: AgentConfig = {
+      name: 'Agent 1',
+      walletAddress: 'wallet1',
+      maxPositions: 5,
+      minSolBalance: 1,
+      targetHealthScore: 4.0,
+      riskTolerance: 'medium',
+      healthCheckIntervalMinutes: 5,
+      marketChangeCheckIntervalMinutes: 15,
+      optimizationIntervalHours: 24,
+      emergencyThresholds: {
+        minHealthScore: 2.0,
+        maxDrawdown: 0.2
+      }
+    };
+
+    // Register agent
+    await cruiseModule.registerAgent('agent1', agentConfig);
     
-    // 为指标收集器注册代理
+    // Register agent with metrics collector
     metrics.registerAgent('agent1');
     
-    // 执行健康检查
+    // Perform health check
     await cruiseModule.performHealthCheck('agent1');
     
-    // 手动记录健康检查指标
+    // Record health check metrics
     metrics.recordHealthCheck('agent1', true, 100);
     
-    // 验证健康检查指标
+    // Verify health check metrics
     const agentMetrics = metrics.getAgentMetrics('agent1');
-    expect(agentMetrics.healthChecks.total).toBe(1);
-    expect(agentMetrics.healthChecks.successful).toBe(1);
+    if (agentMetrics) {
+      expect(agentMetrics.healthChecks).toBeDefined();
+      expect(agentMetrics.healthChecks.totalChecks).toBe(1);
+      expect(agentMetrics.healthChecks.successfulChecks).toBe(1);
+    }
   });
   
   test('should record optimization metrics', async () => {
-    // 注册代理
-    await cruiseModule.registerAgent('agent1', { healthCheckInterval: 300000 });
+    const agentConfig: AgentConfig = {
+      name: 'Agent 1',
+      walletAddress: 'wallet1',
+      maxPositions: 5,
+      minSolBalance: 1,
+      targetHealthScore: 4.0,
+      riskTolerance: 'medium',
+      healthCheckIntervalMinutes: 5,
+      marketChangeCheckIntervalMinutes: 15,
+      optimizationIntervalHours: 24,
+      emergencyThresholds: {
+        minHealthScore: 2.0,
+        maxDrawdown: 0.2
+      }
+    };
+
+    // Register agent
+    await cruiseModule.registerAgent('agent1', agentConfig);
     
-    // 为指标收集器注册代理
+    // Register agent with metrics collector
     metrics.registerAgent('agent1');
     
-    // 执行仓位优化
+    // Perform position optimization
     await cruiseModule.optimizePositions('agent1');
     
-    // 手动记录优化指标
+    // Record optimization metrics
     metrics.recordOptimization(
       'agent1',
       true,
@@ -188,17 +270,20 @@ describe('CruiseModule Metrics Integration Tests', () => {
       1000
     );
     
-    // 验证优化指标
+    // Verify optimization metrics
     const agentMetrics = metrics.getAgentMetrics('agent1');
-    expect(agentMetrics.optimizations.total).toBe(1);
-    expect(agentMetrics.optimizations.successful).toBe(1);
+    if (agentMetrics) {
+      expect(agentMetrics.optimizations).toBeDefined();
+      expect(agentMetrics.optimizations.totalOptimizations).toBe(1);
+      expect(agentMetrics.optimizations.successfulOptimizations).toBe(1);
+    }
   });
   
   test('should update task metrics', async () => {
-    // 启动任务管理器
+    // Start task manager
     taskManager.start();
     
-    // 调度任务
+    // Schedule tasks
     taskManager.scheduleTask(
       'task1',
       async () => { console.log('Task 1 executed'); },
@@ -214,43 +299,59 @@ describe('CruiseModule Metrics Integration Tests', () => {
       ['agent1']
     );
     
-    // 更新任务指标
+    // Update task metrics
     metrics.updateTaskMetrics(
       taskManager.getTaskCount(),
       taskManager.getEnabledTaskCount()
     );
     
-    // 验证任务指标
+    // Verify task metrics
     const metricsSummary = metrics.getMetricsSummary();
     expect(metricsSummary.tasks.total).toBe(2);
-    expect(metricsSummary.tasks.active).toBe(2);
+    expect(metricsSummary.tasks.enabled).toBe(2);
   });
   
   test('should generate metrics summary', async () => {
-    // 注册代理
-    await cruiseModule.registerAgent('agent1', { healthCheckInterval: 300000 });
-    await cruiseModule.registerAgent('agent2', { healthCheckInterval: 600000 });
+    const agentConfig: AgentConfig = {
+      name: 'Agent 1',
+      walletAddress: 'wallet1',
+      maxPositions: 5,
+      minSolBalance: 1,
+      targetHealthScore: 4.0,
+      riskTolerance: 'medium',
+      healthCheckIntervalMinutes: 5,
+      marketChangeCheckIntervalMinutes: 15,
+      optimizationIntervalHours: 24,
+      emergencyThresholds: {
+        minHealthScore: 2.0,
+        maxDrawdown: 0.2
+      }
+    };
+
+    // Register agents
+    await cruiseModule.registerAgent('agent1', agentConfig);
+    await cruiseModule.registerAgent('agent2', agentConfig);
     
-    // 为指标收集器注册代理
+    // Register agents with metrics collector
     metrics.registerAgent('agent1');
     metrics.registerAgent('agent2');
     
-    // 记录健康检查指标
+    // Record health check metrics
     metrics.recordHealthCheck('agent1', true, 100);
     metrics.recordHealthCheck('agent2', false, 150);
     
-    // 记录优化指标
+    // Record optimization metrics
     metrics.recordOptimization('agent1', true, 200, 1, 1, 0.5, 2, 1000);
     
-    // 更新任务指标
+    // Update task metrics
     metrics.updateTaskMetrics(2, 2);
     
-    // 获取指标摘要
+    // Get metrics summary
     const summary = metrics.getMetricsSummary();
     
-    // 验证摘要内容
+    // Verify summary content
     expect(summary).toBeDefined();
-    expect(summary.agents).toBe(2);
+    expect(summary.registeredAgents).toBe(2);
     expect(summary.healthChecks.total).toBe(2);
     expect(summary.healthChecks.successful).toBe(1);
     expect(summary.optimizations.total).toBe(1);

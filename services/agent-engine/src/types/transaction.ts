@@ -1,4 +1,11 @@
-import { TransactionResult } from './index';
+// 交易结果接口
+export interface TransactionResult {
+  success: boolean;
+  txHash?: string;
+  error?: string;
+  blockTime?: number;
+  fee?: number;
+}
 
 // 交易类型枚举
 export enum TransactionType {
@@ -7,6 +14,7 @@ export enum TransactionType {
   ADD_LIQUIDITY = 'ADD_LIQUIDITY',
   REMOVE_LIQUIDITY = 'REMOVE_LIQUIDITY',
   SWAP = 'SWAP',
+  SWAP_TO_SOL = 'SWAP_TO_SOL',
   REBALANCE = 'REBALANCE',
   EMERGENCY_EXIT = 'EMERGENCY_EXIT'
 }

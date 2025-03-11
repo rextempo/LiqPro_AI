@@ -27,7 +27,7 @@ describe('Solana Integration', () => {
   const signer = new SolanaTransactionSigner(logger);
   const sender = new SolanaTransactionSender(logger, [SOLANA_DEVNET_URL]);
   const transactionExecutor = new TransactionExecutor(signer, sender, builder, logger);
-  const fundsManager = new SolanaFundsManager(logger);
+  const fundsManager = new SolanaFundsManager(logger, SOLANA_DEVNET_URL);
   const riskController = new AgentRiskController(logger, transactionExecutor, fundsManager);
   
   // 使用预定义的测试钱包地址
@@ -57,7 +57,7 @@ describe('Solana Integration', () => {
     signer.registerWallet(testWalletAddress, 'test_wallet_key');
     
     // 创建并注册状态机
-    stateMachine = new AgentStateMachine(testConfig);
+    stateMachine = new AgentStateMachine(testConfig, logger);
     stateMachine.handleEvent(AgentEvent.START);
     riskController.registerAgent(testAgentId, stateMachine);
     

@@ -46,8 +46,37 @@ npm install
 3. Start development environment:
 
 ```bash
+# Using the one-click startup script
+chmod +x scripts/start-dev.sh
+./scripts/start-dev.sh
+
+# Or using npm
 npm run dev
 ```
+
+### Docker Development Environment
+
+We provide a Docker-based development environment for easy setup and consistent development experience:
+
+1. Make sure Docker and Docker Compose are installed
+2. Run the one-click startup script:
+
+```bash
+chmod +x scripts/start-dev.sh
+./scripts/start-dev.sh
+```
+
+3. Select option 1 to start all services
+
+The script provides the following options:
+- Start all services
+- Stop all services
+- Restart all services
+- Check service status
+- View service logs
+- Rebuild and start all services
+
+For more details, see the [Development Guide](DEVELOPMENT.md).
 
 ### Available Scripts
 

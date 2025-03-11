@@ -11,7 +11,7 @@ export enum LogLevel {
 /**
  * 日志记录器接口
  */
-export interface Logger {
+export interface ILogger {
   debug(message: string, ...args: any[]): void;
   info(message: string, ...args: any[]): void;
   warn(message: string, ...args: any[]): void;
@@ -22,7 +22,7 @@ export interface Logger {
 /**
  * 控制台日志记录器实现
  */
-export class ConsoleLogger implements Logger {
+export class ConsoleLogger implements ILogger {
   private level: LogLevel;
 
   constructor(level: LogLevel = LogLevel.INFO) {
@@ -88,5 +88,76 @@ export class ConsoleLogger implements Logger {
    */
   private getTimestamp(): string {
     return new Date().toISOString();
+  }
+}
+
+/**
+ * 结构化日志记录器
+ */
+export interface LoggerOptions {
+  module: string;
+}
+
+export class Logger {
+  private module: string;
+  private static defaultLogger = console;
+
+  constructor(options: LoggerOptions) {
+    this.module = options.module;
+  }
+
+  /**
+   * Create a child logger with a specific module name
+   */
+  public child(options: { module: string }): Logger {
+    return new Logger({ module: `${this.module}:${options.module}` });
+  }
+
+  /**
+   * Log an info message
+   */
+  public info(message: string | object, context?: string): void {
+    this.log('INFO', message, context);
+  }
+
+  /**
+   * Log a warning message
+   */
+  public warn(message: string | object, context?: string): void {
+    this.log('WARN', message, context);
+  }
+
+  /**
+   * Log an error message
+   */
+  public error(message: string | object, context?: string | Error): void {
+    this.log('ERROR', message, context);
+  }
+
+  /**
+   * Log a debug message
+   */
+  public debug(message: string | object, context?: string): void {
+    this.log('DEBUG', message, context);
+  }
+
+  /**
+   * Internal log method
+   */
+  private log(level: string, message: string | object, context?: string | Error): void {
+    const timestamp = new Date().toISOString();
+    const formattedMessage = typeof message === 'string' ? message : JSON.stringify(message);
+    
+    let contextStr = '';
+    if (context) {
+      if (typeof context === 'string') {
+        contextStr = context;
+      } else if (context instanceof Error) {
+        contextStr = context.message;
+      }
+    }
+
+    const logMessage = `[${timestamp}] ${level} [${this.module}]: ${formattedMessage}${contextStr ? ` - ${contextStr}` : ''}`;
+    Logger.defaultLogger.log(logMessage);
   }
 } 

@@ -2,10 +2,14 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "composite": true
+    "composite": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "skipLibCheck": true,
+    "noImplicitAny": false
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"],
+  "exclude": ["node_modules", "dist"],
   "references": [
     { "path": "../../libs/common" },
     { "path": "../../libs/database" },

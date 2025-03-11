@@ -7,9 +7,9 @@ import {
   TransactionType,
   TransactionSigner,
   TransactionSender,
-  TransactionBuilder
+  TransactionBuilder,
+  TransactionResult
 } from '../types/transaction';
-import { TransactionResult } from '../types';
 import { Logger } from '../utils/logger';
 
 // 默认交易选项
@@ -164,7 +164,7 @@ export class TransactionExecutor {
   /**
    * 执行单个交易
    */
-  private async executeTransaction(
+  public async executeTransaction(
     request: TransactionRequest,
     options?: TransactionOptions
   ): Promise<TransactionResult> {
@@ -172,7 +172,17 @@ export class TransactionExecutor {
     let currentRequest = { ...request };
     
     try {
-      this.logger.info(`Executing transaction: ${request.id} of type ${request.type} for agent ${request.agentId}`);
+      this.logger.info(`Executing transaction: ${request.id || 'new'} of type ${request.type} for agent ${request.agentId}`);
+      
+      // 如果没有ID，创建一个新的请求
+      if (!currentRequest.id) {
+        currentRequest = this.createRequest(
+          request.type as TransactionType,
+          request.data,
+          request.agentId,
+          options
+        );
+      }
       
       // 更新状态为签名中
       currentRequest = this.updateRequestStatus(
@@ -193,16 +203,17 @@ export class TransactionExecutor {
         case TransactionType.REMOVE_LIQUIDITY:
           transaction = await this.builder.buildRemoveLiquidityTransaction(
             currentRequest.data.poolAddress,
-            currentRequest.data.amount,
+            currentRequest.data.percentage,
             currentRequest.data.binRange
           );
           break;
         case TransactionType.SWAP:
+        case TransactionType.SWAP_TO_SOL:
           transaction = await this.builder.buildSwapTransaction(
-            currentRequest.data.fromToken,
-            currentRequest.data.toToken,
+            currentRequest.type === TransactionType.SWAP_TO_SOL ? 'SOL' : currentRequest.data.fromToken,
+            currentRequest.type === TransactionType.SWAP_TO_SOL ? currentRequest.data.toToken : 'SOL',
             currentRequest.data.amount,
-            currentRequest.data.slippage
+            currentRequest.data.maxSlippage
           );
           break;
         case TransactionType.EMERGENCY_EXIT:
@@ -249,12 +260,12 @@ export class TransactionExecutor {
         result
       );
       
-      this.logger.info(`Transaction ${currentRequest.id} confirmed: ${txHash}`);
-      return result;
-      
+      return {
+        ...result,
+        txHash,
+        success: true
+      };
     } catch (error: any) {
-      this.logger.error(`Transaction ${currentRequest.id} failed: ${error.message}`);
-      
       // 更新状态为失败
       currentRequest = this.updateRequestStatus(
         currentRequest.id,
@@ -263,12 +274,12 @@ export class TransactionExecutor {
         error.message
       );
       
-      // 如果可以重试，则重试
+      // 如果还有重试次数，尝试重试
       if (currentRequest.retryCount < currentRequest.maxRetries) {
-        return this.retry(currentRequest, mergedOptions);
+        this.logger.info(`Retrying transaction ${currentRequest.id}, attempt ${currentRequest.retryCount + 1}`);
+        return this.retry(currentRequest, options);
       }
       
-      // 返回失败结果
       return {
         success: false,
         error: error.message
