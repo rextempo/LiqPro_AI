@@ -6,21 +6,25 @@
     "dev": "ts-node-dev --respawn src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests",
+    "test:integration": "INTEGRATION_TEST=true jest --testPathPattern='tests/integration' --no-cache"
   },
   "dependencies": {
     "@liqpro/common": "0.1.0",
     "@liqpro/security": "0.1.0",
     "@meteora-ag/dlmm": "^1.3.0",
     "@solana/web3.js": "^1.91.1",
-    "express": "^4.17.1"
+    "@types/uuid": "10.0.0",
+    "express": "^4.17.1",
+    "uuid": "11.1.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.13",
-    "@types/jest": "^27.0.0",
+    "@types/jest": "27.5.2",
     "@types/node": "^16.0.0",
     "jest": "^27.0.0",
-    "ts-jest": "^27.0.0",
+    "jest-mock": "29.7.0",
+    "ts-jest": "27.1.5",
     "ts-node-dev": "^2.0.0",
     "typescript": "^4.5.0"
   }
