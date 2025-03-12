@@ -1,161 +1,115 @@
-# LiqPro
+# LiqPro Frontend
 
-LiqPro is an AI-driven automated LP investment platform for Meteora DLMM liquidity pools on the Solana blockchain. The platform helps users automatically capture high-quality LP investment opportunities and execute trades to generate passive income.
+这是LiqPro的前端应用程序，LiqPro是一个专注于Solana区块链上Meteora DLMM流动性池的AI驱动投资平台。
 
-## Current Status (v0.4.3)
+## 功能特性
 
-### Component Completion
+- 多种认证方式：钱包登录和API密钥登录
+- 通过WebSocket实现实时数据更新
+- 受保护的路由系统，基于用户角色控制访问权限
+- 响应式设计，适配各种设备尺寸
+- 定时任务管理，支持自动化操作
 
-- Core Backend: 95%
-- Data Service: 90%
-- Scoring Service: 85%
-- Signal Service: 80%
-- WebSocket API: 80%
-- REST API: 95%
-- Frontend Interface: 5%
-- System Integration: 15%
-- Deployment Preparation: 20%
+## 技术栈
 
-### Recent Updates
+- React 18
+- TypeScript
+- Tailwind CSS 用于样式设计
+- React Router v6 用于导航
+- Axios 用于API请求
+- WebSocket 用于实时通信
+- Solana Web3.js 用于区块链交互
 
-- Completed API service integration with performance testing framework
-- Implemented caching mechanism with Redis support
-- Enhanced WebSocket service with connection management and fault tolerance
-- Improved signal filtering and processing capabilities
+## 开发状态
 
-## Project Structure
+当前版本: **0.1.0-alpha** (开发中)
 
-```
-/LiqPro
-├── services/                # Microservices
-│   ├── api-service/        # REST API and service integration
-│   ├── data-service/       # Market data collection and processing
-│   ├── signal-service/     # Market analysis and signal generation
-│   ├── scoring-service/    # Pool health scoring and risk assessment
-│   └── agent-engine/       # Agent lifecycle and transaction management
-├── libs/                   # Shared libraries
-│   ├── common/            # Common utilities and types
-│   ├── database/          # Database access layer
-│   └── security/          # Security related functionality
-├── frontend/              # Frontend application (in development)
-├── deploy/                # Deployment configurations
-│   └── docker/           # Docker development environment
-└── docs/                  # Project documentation
-```
+已完成的功能:
 
-## Technology Stack
+- ✅ 项目基础架构
+- ✅ 认证系统
+- ✅ WebSocket通信
+- ✅ 路由保护
+- ✅ 基础UI组件
 
-### Backend
+正在开发的功能:
 
-- **Core Services**: Node.js with TypeScript
-- **API Layer**: Express.js with WebSocket support
-- **Database**: PostgreSQL (main data), MongoDB (market data), Redis (caching)
-- **Message Queue**: Redis Pub/Sub
-- **Blockchain Integration**: Solana Web3.js, Anchor Framework
-- **DEX Integration**: Jupiter API, Meteora DLMM SDK
+- 🔄 Agent管理界面
+- 🔄 LP池子展示
+- 🔄 资产概况和收益分析
 
-### Frontend (Planned)
+查看 [VERSION.md](./VERSION.md) 获取更多详细信息。
 
-- **Framework**: React with TypeScript
-- **UI Components**: Chakra UI, TailwindUI, Headless UI, Tremor
-- **State Management**: Redux Toolkit
-- **Data Visualization**: Tremor, Chart.js
-- **Wallet Integration**: Solana Wallet Adapter
+## 快速开始
 
-### DevOps
-
-- **Containerization**: Docker & Docker Compose
-- **Monitoring**: Prometheus + Grafana + ELK Stack
-- **CI/CD**: GitHub Actions (planned)
-
-## Development Setup
-
-### Prerequisites
+### 前提条件
 
 - Node.js 16+
-- Docker and Docker Compose
-- Git
-- Solana CLI tools
-- Redis (for local development)
+- npm 或 yarn
 
-### Installation
+### 安装
 
-1. Clone the repository:
+1. 克隆仓库
 
 ```bash
 git clone https://github.com/yourusername/liqpro.git
 cd liqpro
 ```
 
-2. Install dependencies:
+2. 安装依赖
 
 ```bash
 npm install
 ```
 
-3. Start development environment:
+3. 启动开发服务器
 
 ```bash
-# Using the one-click startup script
-chmod +x scripts/start-dev.sh
-./scripts/start-dev.sh
+npm start
 ```
 
-### Docker Development Environment
+应用程序将在 http://localhost:3000 可用。
 
-We provide a Docker-based development environment:
+## 项目结构
 
-1. Ensure Docker and Docker Compose are installed
-2. Run the development script:
-
-```bash
-./scripts/start-dev.sh
+```
+src/
+├── api/              # API客户端实现
+│   └── clients/      # 各种API客户端
+├── components/       # 可复用UI组件
+├── contexts/         # React上下文提供者
+├── config/           # 应用配置
+├── core/             # 核心功能实现
+├── types/            # TypeScript类型定义
+├── utils/            # 工具函数
+├── App.tsx           # 主应用组件
+└── index.tsx         # 应用入口点
 ```
 
-The script provides options for:
+## 可用脚本
 
-- Starting all services
-- Stopping services
-- Restarting services
-- Checking service status
-- Viewing logs
-- Rebuilding services
+- `npm start` - 启动开发服务器
+- `npm build` - 构建生产版本
+- `npm test` - 运行测试套件
+- `npm lint` - 运行代码检查
+- `npm lint:fix` - 修复代码检查问题
 
-For detailed setup instructions, see [DEVELOPMENT.md](DEVELOPMENT.md).
+## 安全考虑
 
-### Available Scripts
+- 所有API请求都使用JWT令牌进行认证
+- 令牌过期时自动刷新
+- 敏感数据从不以明文形式存储在本地存储中
+- 受保护的路由确保适当的授权
+- WebSocket连接使用安全会话管理
 
-- `npm run dev` - Start development environment
-- `npm run dev:build` - Rebuild and start development environment
-- `npm run lint` - Run ESLint
-- `npm run format` - Format code with Prettier
-- `npm test` - Run tests
-- `npm run test:integration` - Run integration tests
-- `npm run test:performance` - Run performance tests
+## 贡献指南
 
-## Documentation
+1. Fork 仓库
+2. 创建功能分支 (`git checkout -b feature/amazing-feature`)
+3. 提交更改 (`git commit -m 'Add some amazing feature'`)
+4. 推送到分支 (`git push origin feature/amazing-feature`)
+5. 创建Pull Request
 
-- [Development Guide](DEVELOPMENT.md) - Detailed development setup and guidelines
-- [API Documentation](docs/api/README.md) - REST API and WebSocket documentation
-- [Architecture Overview](docs/architecture/README.md) - System architecture and design
-- [Deployment Guide](docs/deployment/README.md) - Deployment instructions
+## 许可证
 
-## Contributing
-
-1. Create a feature branch from `main`
-2. Follow the coding standards and guidelines
-3. Run tests and ensure linting passes
-4. Submit a pull request with detailed description
-
-## Security
-
-- All user funds are managed through secure wallet integration
-- Private keys are encrypted and never stored in plain text
-- Regular security audits and penetration testing
-- Comprehensive error handling and input validation
-
-## License
-
-Proprietary - All rights reserved
-
-© 2024 LiqPro. All rights reserved.
+本项目采用MIT许可证 - 详情请参阅LICENSE文件。
