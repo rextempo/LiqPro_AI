@@ -19,7 +19,14 @@
     "downlevelIteration": true,
     "paths": {
       "@/*": ["src/*"]
-    }
+    },
+    "composite": true
   },
-  "include": ["src", "src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"]
+  "include": ["src", "src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"],
+  "references": [
+    { "path": "./libs/common" },
+    { "path": "./libs/database" },
+    { "path": "./libs/security" },
+    { "path": "./services/scoring-service" }
+  ]
 }
