@@ -10,6 +10,7 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import { FiAlertTriangle, FiRefreshCw } from 'react-icons/fi';
+import { IconWrapper, ButtonIcon } from '../IconWrapper';
 
 interface Props {
   children: ReactNode;
@@ -21,6 +22,82 @@ interface State {
   error: Error | null;
   errorInfo: ErrorInfo | null;
 }
+
+// 错误UI函数组件
+const ErrorFallback: React.FC<{
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
+  onReset: () => void;
+}> = ({ error, errorInfo, onReset }) => {
+  const bgColor = useColorModeValue('gray.50', 'gray.900');
+  const errorColor = useColorModeValue('danger.500', 'danger.300');
+  const codeBgColor = useColorModeValue('gray.100', 'gray.700');
+
+  return (
+    <Flex
+      direction="column"
+      align="center"
+      justify="center"
+      minH="100vh"
+      p={8}
+      bg={bgColor}
+    >
+      <VStack spacing={6} maxW="800px" textAlign="center">
+        <Box
+          fontSize="6xl"
+          color={errorColor}
+        >
+          <IconWrapper icon={FiAlertTriangle} />
+        </Box>
+        
+        <Heading size="xl" color={errorColor}>
+          出现了一些问题
+        </Heading>
+        
+        <Text fontSize="lg">
+          应用程序遇到了意外错误。您可以尝试刷新页面或返回首页。
+        </Text>
+        
+        <Button
+          leftIcon={<ButtonIcon icon={FiRefreshCw} />}
+          colorScheme="primary"
+          onClick={onReset}
+          size="lg"
+          mt={4}
+        >
+          重试
+        </Button>
+        
+        {/* 开发环境下显示错误详情 */}
+        {process.env.NODE_ENV === 'development' && (
+          <Box
+            mt={8}
+            p={4}
+            bg={codeBgColor}
+            borderRadius="md"
+            width="100%"
+            textAlign="left"
+            overflowX="auto"
+          >
+            <Heading size="md" mb={2}>错误详情：</Heading>
+            <Code colorScheme="red" whiteSpace="pre-wrap">
+              {error?.toString()}
+            </Code>
+            
+            {errorInfo && (
+              <>
+                <Heading size="sm" mt={4} mb={2}>组件堆栈：</Heading>
+                <Code colorScheme="gray" whiteSpace="pre-wrap" fontSize="xs">
+                  {errorInfo.componentStack}
+                </Code>
+              </>
+            )}
+          </Box>
+        )}
+      </VStack>
+    </Flex>
+  );
+};
 
 class ErrorBoundary extends Component<Props, State> {
   public state: State = {
@@ -50,70 +127,13 @@ class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
-      // 默认的错误 UI
+      // 使用函数组件作为错误UI
       return (
-        <Flex
-          direction="column"
-          align="center"
-          justify="center"
-          minH="100vh"
-          p={8}
-          bg={useColorModeValue('gray.50', 'gray.900')}
-        >
-          <VStack spacing={6} maxW="800px" textAlign="center">
-            <Box
-              fontSize="6xl"
-              color={useColorModeValue('danger.500', 'danger.300')}
-            >
-              <FiAlertTriangle />
-            </Box>
-            
-            <Heading size="xl" color={useColorModeValue('danger.500', 'danger.300')}>
-              出现了一些问题
-            </Heading>
-            
-            <Text fontSize="lg">
-              应用程序遇到了意外错误。您可以尝试刷新页面或返回首页。
-            </Text>
-            
-            <Button
-              leftIcon={<FiRefreshCw />}
-              colorScheme="primary"
-              onClick={this.handleReset}
-              size="lg"
-              mt={4}
-            >
-              重试
-            </Button>
-            
-            {/* 开发环境下显示错误详情 */}
-            {process.env.NODE_ENV === 'development' && (
-              <Box
-                mt={8}
-                p={4}
-                bg={useColorModeValue('gray.100', 'gray.700')}
-                borderRadius="md"
-                width="100%"
-                textAlign="left"
-                overflowX="auto"
-              >
-                <Heading size="md" mb={2}>错误详情：</Heading>
-                <Code colorScheme="red" whiteSpace="pre-wrap">
-                  {this.state.error?.toString()}
-                </Code>
-                
-                {this.state.errorInfo && (
-                  <>
-                    <Heading size="sm" mt={4} mb={2}>组件堆栈：</Heading>
-                    <Code colorScheme="gray" whiteSpace="pre-wrap" fontSize="xs">
-                      {this.state.errorInfo.componentStack}
-                    </Code>
-                  </>
-                )}
-              </Box>
-            )}
-          </VStack>
-        </Flex>
+        <ErrorFallback 
+          error={this.state.error} 
+          errorInfo={this.state.errorInfo}
+          onReset={this.handleReset}
+        />
       );
     }
 

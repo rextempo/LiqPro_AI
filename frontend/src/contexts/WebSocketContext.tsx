@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useToast } from '@chakra-ui/react';
 import { useAuth } from './AuthContext';
 import { websocketClient } from '../api';
-import { Signal, AgentUpdate, PoolUpdate, MarketUpdate } from '../api/types';
+import { Signal, AgentUpdate, PoolUpdate, MarketUpdate } from '../api/types/index';
 
 interface WebSocketContextType {
   isConnected: boolean;

@@ -21,12 +21,13 @@ import PoolPositions from '../components/AgentDetail/PoolPositions';
 import TransactionHistory from '../components/AgentDetail/TransactionHistory';
 import AgentLog from '../components/AgentDetail/AgentLog';
 import StrategySettings from '../components/AgentDetail/StrategySettings';
+import { AgentStatus } from '../api/types/index';
 
 // Mock data for the agent
 const mockAgent = {
   id: '1',
   name: 'Meteora LP Agent #1',
-  status: 'running', // 'running', 'paused', 'stopped'
+  status: 'running' as AgentStatus, // 'running', 'observing', 'stopped'
   runningTime: '3d 5h 12m',
   assetValue: {
     sol: 125.45,
@@ -48,10 +49,8 @@ const mockPoolPositions = [
     id: '1',
     name: 'SOL-USDC',
     icons: ['sol', 'usdc'],
-    value: {
-      sol: 50.25,
-      usd: 5025.00,
-    },
+    valueSOL: 50.25,
+    valueUSD: 5025.00,
     yield24h: 0.35,
     healthScore: 4.5,
   },
@@ -59,10 +58,8 @@ const mockPoolPositions = [
     id: '2',
     name: 'SOL-BONK',
     icons: ['sol', 'bonk'],
-    value: {
-      sol: 35.75,
-      usd: 3575.00,
-    },
+    valueSOL: 35.75,
+    valueUSD: 3575.00,
     yield24h: 1.25,
     healthScore: 3.8,
   },
@@ -70,10 +67,8 @@ const mockPoolPositions = [
     id: '3',
     name: 'USDC-USDT',
     icons: ['usdc', 'usdt'],
-    value: {
-      sol: 39.45,
-      usd: 3945.00,
-    },
+    valueSOL: 39.45,
+    valueUSD: 3945.00,
     yield24h: 0.15,
     healthScore: 4.9,
   },
@@ -166,14 +161,16 @@ const AgentDetailPage: React.FC = () => {
         >
           <GridItem colSpan={{ base: 1, md: 2 }}>
             <AssetSummary
-              currentValueSol={mockAgent.assetValue.sol}
-              currentValueUsd={mockAgent.assetValue.usd}
-              profitSol={mockAgent.profit.sol}
-              profitUsd={mockAgent.profit.usd}
-              profitPercentage={mockAgent.profit.percentage}
-              expectedAPR={mockAgent.expectedAPR}
-              selectedTimeRange={timeRange}
+              assetValueSOL={mockAgent.assetValue.sol}
+              assetValueUSD={mockAgent.assetValue.usd}
+              totalProfitSOL={mockAgent.profit.sol}
+              totalProfitUSD={mockAgent.profit.usd}
+              totalProfitPercent={mockAgent.profit.percentage}
+              timeRange={timeRange}
               onTimeRangeChange={handleTimeRangeChange}
+              apr={mockAgent.expectedAPR}
+              feeIncome={60}
+              tokenValueChange={40}
             />
           </GridItem>
           
@@ -205,11 +202,11 @@ const AgentDetailPage: React.FC = () => {
             </TabPanel>
             
             <TabPanel>
-              <PerformanceChart title="历史收益" />
+              <PerformanceChart agentId={agentId || '1'} />
             </TabPanel>
             
             <TabPanel>
-              <TransactionHistory transactions={mockTransactions} />
+              <TransactionHistory agentId={agentId || '1'} />
             </TabPanel>
             
             <TabPanel>
