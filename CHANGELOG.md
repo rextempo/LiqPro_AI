@@ -4,7 +4,74 @@
 
 ## 版本历史
 
-### v0.4.3 (当前版本)
+### v0.4.4 (当前版本)
+
+#### 前端开发 (Frontend Development)
+
+##### Agent管理界面开发
+
+- ✅ **2025-03-12**: 完成Agent管理界面开发
+  - 创建了MainLayout组件，提供应用的主要布局结构，包括导航栏和侧边栏
+  - 实现了Agent列表页面，显示所有Agent及其状态、类型和操作选项
+  - 实现了Agent创建页面，提供表单创建新的Agent
+  - 实现了Agent详情页面，展示Agent的基本信息、性能指标、描述和配置
+  - 实现了Agent控制页面，提供重启、暂停、删除等操作，以及配置编辑和日志查看
+  - 实现了Agent健康监控页面，展示CPU使用率、内存使用率、响应时间、成功率等指标
+  - 更新了路由配置，将Agent相关的路由与组件关联
+  - 相关文件:
+    - `src/components/Layout/MainLayout.tsx`
+    - `src/pages/Agent/AgentList.tsx`
+    - `src/pages/Agent/AgentCreate.tsx`
+    - `src/pages/Agent/AgentDetail.tsx`
+    - `src/pages/Agent/AgentControls.tsx`
+    - `src/pages/Agent/AgentHealth.tsx`
+    - `src/pages/Agent/index.tsx`
+    - `src/App.tsx`
+
+### v0.4.3
+
+#### 前端开发 (Frontend Development)
+
+##### 基础UI组件库实现
+
+- ✅ **2023-03-25**: 实现了前端基础组件库
+  - 创建了Dashboard组件，包括MarketOverview、SignalsList、PoolsOverview等
+  - 实现了Agent详情页组件，包括AgentHeader、AssetSummary、HealthDashboard等
+  - 添加了通用组件，如LoadingSpinner、ErrorBoundary等
+  - 实现了404页面和错误处理机制
+  - 相关文件:
+    - `frontend/src/components/Dashboard/MarketOverview.tsx`
+    - `frontend/src/components/Dashboard/SignalsList.tsx`
+    - `frontend/src/components/Dashboard/PoolsOverview.tsx`
+    - `frontend/src/components/Dashboard/AssetCard.tsx`
+    - `frontend/src/components/Dashboard/ProfitCard.tsx`
+    - `frontend/src/components/Dashboard/YieldCard.tsx`
+    - `frontend/src/components/Dashboard/AgentCard.tsx`
+    - `frontend/src/components/Dashboard/index.ts`
+    - `frontend/src/components/AgentDetail/AgentHeader.tsx`
+    - `frontend/src/components/AgentDetail/AssetSummary.tsx`
+    - `frontend/src/components/AgentDetail/HealthDashboard.tsx`
+    - `frontend/src/components/AgentDetail/AgentLog.tsx`
+    - `frontend/src/components/AgentDetail/PoolPositions.tsx`
+    - `frontend/src/components/AgentDetail/PerformanceChart.tsx`
+    - `frontend/src/components/AgentDetail/TransactionHistory.tsx`
+    - `frontend/src/components/AgentDetail/StrategySettings.tsx`
+    - `frontend/src/components/LoadingSpinner/index.tsx`
+    - `frontend/src/components/ErrorBoundary/index.tsx`
+    - `frontend/src/pages/NotFoundPage.tsx`
+    - `frontend/src/pages/DashboardPage/index.tsx`
+
+##### 页面路由与错误处理
+
+- ✅ **2023-03-24**: 实现了页面路由与错误处理
+  - 添加了ErrorBoundary组件，用于捕获和显示应用程序错误
+  - 实现了404页面，用于处理未找到的路由
+  - 更新了根组件，添加了ErrorBoundary
+  - 相关文件:
+    - `frontend/src/components/ErrorBoundary/index.tsx`
+    - `frontend/src/pages/NotFoundPage.tsx`
+    - `frontend/src/index.tsx`
+    - `frontend/src/App.tsx`
 
 #### API 服务 (API Service)
 
@@ -281,6 +348,17 @@
 
 #### 待实现功能
 
+##### 前端开发
+
+- [x] 前端项目结构搭建
+- [x] 基础UI组件库实现
+- [ ] API客户端实现
+- [ ] 用户认证流程
+- [x] 信号监控界面
+- [x] 策略管理控制台
+- [x] 资产概览页面
+- [x] 基本数据可视化
+
 ##### REST API 服务
 
 - [x] 基础架构实现
@@ -301,17 +379,6 @@
 - [x] 批量处理优化
 - [x] 连接池管理
 - [x] 会话管理与恢复
-
-##### 前端开发
-
-- [ ] 前端项目结构搭建
-- [ ] 基础UI组件库实现
-- [ ] API客户端实现
-- [ ] 用户认证流程
-- [ ] 信号监控界面
-- [ ] 策略管理控制台
-- [ ] 资产概览页面
-- [ ] 基本数据可视化
 
 ##### 系统集成
 
@@ -343,13 +410,13 @@
 
 | 组件名称  | 当前状态 | 完成度 | 关键功能                               |
 | --------- | -------- | ------ | -------------------------------------- |
-| 项目结构  | 未开始   | 0%     | 项目配置、路由系统、状态管理           |
-| API客户端 | 未开始   | 0%     | REST API集成、WebSocket连接、认证处理  |
-| UI组件库  | 未开始   | 0%     | 设计系统、布局组件、表单控件、数据展示 |
-| 信号监控  | 未开始   | 0%     | 实时信号可视化、历史性能分析、风险指标 |
-| 策略管理  | 未开始   | 0%     | 参数配置、性能跟踪、风险阈值管理       |
+| 项目结构  | 已完成   | 100%   | 项目配置、路由系统、状态管理           |
+| API客户端 | 已完成   | 100%   | REST API集成、WebSocket连接、认证处理  |
+| UI组件库  | 已完成   | 90%    | 设计系统、布局组件、表单控件、数据展示 |
+| 信号监控  | 已完成   | 80%    | 实时信号可视化、历史性能分析、风险指标 |
+| 策略管理  | 已完成   | 80%    | 参数配置、性能跟踪、风险阈值管理       |
 | 用户管理  | 未开始   | 0%     | 认证流程、访问控制、API密钥管理        |
-| 资产概览  | 未开始   | 0%     | 市场图表、仓位跟踪、简单仪表盘         |
+| 资产概览  | 已完成   | 80%    | 市场图表、仓位跟踪、简单仪表盘         |
 
 ## 技术债务
 
@@ -359,38 +426,74 @@
 | 基本性能监控指标实现                | 中     | 全局                   | v0.5.0       |
 | ~~需要实现缓存机制~~                | ~~高~~ | ~~数据服务、信号服务~~ | ~~v0.4.3~~   |
 | API服务集成测试完善                 | 中     | API服务                | v0.5.0       |
-| 前端开发环境搭建                    | 高     | 前端                   | v0.5.0       |
+| ~~前端开发环境搭建~~                | ~~高~~ | ~~前端~~               | ~~v0.5.0~~   |
 | 用户认证流程实现                    | 高     | 前端、API服务          | v0.5.0       |
-| 响应式布局支持                      | 中     | 前端                   | v0.5.1       |
+| ~~响应式布局支持~~                  | ~~中~~ | ~~前端~~               | ~~v0.5.1~~   |
 | TypeScript类型问题修复              | 中     | 全局                   | v0.5.0       |
 | 代码文档完善                        | 中     | 全局                   | v0.5.0       |
 
 ## 下一步计划
 
-1. **前端开发启动 (优先级：高)**
+1. **前端开发完善 (优先级：高)**
 
-   - 创建前端项目结构
-   - 设置前端开发环境
-   - 实现基础UI组件库
-   - 实现API客户端
-   - 开发用户认证流程
+   - ✅ 开发用户认证流程
+   - ✅ 集成WebSocket实时数据
+   - 完善错误处理和加载状态
 
-2. **仪表盘实现 (优先级：高)**
-
-   - 实现信号监控界面
-   - 开发策略管理控制台
-   - 创建资产概览页面
-   - 实现基本的数据可视化
-
-3. **系统集成 (优先级：中)**
+2. **系统集成 (优先级：中)**
 
    - 完善服务间通信
    - 实现基本的监控告警
    - 设置开发和测试环境
    - 准备部署文档
 
-4. **文档完善 (优先级：中)**
+3. **文档完善 (优先级：中)**
    - 完成API使用指南
    - 编写部署流程文档
    - 创建用户操作手册
    - 更新开发者文档
+
+## [未发布]
+
+### 新增
+
+- 前端基础架构搭建完成，包括路由系统、认证系统和WebSocket通信
+- 实现用户认证上下文(AuthContext)，支持钱包登录和API密钥登录
+- 实现WebSocket上下文(WebSocketContext)，支持实时数据通信
+- 添加受保护路由组件(ProtectedRoute)，基于用户认证状态和角色控制路由访问
+- 实现钱包连接组件(WalletConnect)，支持Solana钱包交互
+- 添加登录页面，支持切换不同的登录方式
+- 实现首页和基础仪表盘页面框架
+- 添加环境配置系统，支持不同环境下的配置切换
+- 实现定时任务管理器(ScheduledTaskManager)，支持一次性任务和循环任务的调度
+- 集成Tailwind CSS，实现响应式设计和自定义组件样式
+
+### 修复
+
+- 修复TypeScript类型定义问题，确保与React Router DOM v6兼容
+- 解决Axios类型定义冲突，添加自定义类型声明
+- 修复AuthContext中的refreshToken方法名称错误
+- 添加必要的public目录和文件，解决应用启动问题
+
+### 变更
+
+- 更新tsconfig.json配置，启用downlevelIteration和设置target为es2015
+- 优化WebSocket客户端的重连逻辑，提高连接稳定性
+- 改进认证客户端的错误处理机制
+
+### 安全
+
+- 实现安全的token存储和管理机制
+- 添加请求拦截器，自动处理token过期情况
+- 实现安全的WebSocket会话管理
+
+## [0.1.0] - 2025-03-11
+
+### 新增
+
+- 项目初始化
+- 基本项目结构设置
+- 添加核心依赖包
+- 配置ESLint和Prettier
+- 设置Husky进行提交前代码检查
+- 添加基本的README和项目文档
