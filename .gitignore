@@ -2,12 +2,18 @@
 /node_modules
 /.pnp
 .pnp.js
+**/node_modules/
 
 # testing
 /coverage
+**/coverage/
 
 # production
 /build
+/dist
+**/dist/
+**/build/
+/frontend/
 
 # misc
 .DS_Store
@@ -31,4 +37,17 @@ yarn-error.log*
 
 # Database
 *.sqlite
-*.db 
+*.db
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env*
+!.env.example
+
+# Cache directories
+.cache/
+.npm/
+.yarn/ 
