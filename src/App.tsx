@@ -14,6 +14,21 @@ import {
   AgentControls, 
   AgentHealth 
 } from './pages/Agent';
+import { lazyLoad } from './utils/lazyLoad';
+import { userManagementRoutes } from './routes/userManagementRoutes';
+
+// Lazy load user management components
+const UserManagementPage = lazyLoad(() => import('./pages/UserManagementPage'), {
+  preload: false,
+});
+
+// Lazy load individual user management components
+const UserManagement = lazyLoad(() => import('./components/user/UserManagement'));
+const RoleManagement = lazyLoad(() => import('./components/user/RoleManagement'));
+const PermissionManagement = lazyLoad(() => import('./components/user/PermissionManagement'));
+const ApiKeyManagement = lazyLoad(() => import('./components/user/ApiKeyManagement'));
+const SessionMonitoring = lazyLoad(() => import('./components/user/SessionMonitoring'));
+const UserSettings = lazyLoad(() => import('./components/user/UserSettings'));
 
 /**
  * Unauthorized page
@@ -52,6 +67,17 @@ const App: React.FC = () => {
                 <Route path="agents/:id" element={<AgentDetail />} />
                 <Route path="agents/:id/controls" element={<AgentControls />} />
                 <Route path="agents/:id/health" element={<AgentHealth />} />
+                
+                {/* User Management routes */}
+                <Route path="user-management" element={<UserManagementPage />}>
+                  <Route index element={<UserManagement />} />
+                  <Route path="users" element={<UserManagement />} />
+                  <Route path="roles" element={<RoleManagement />} />
+                  <Route path="permissions" element={<PermissionManagement />} />
+                  <Route path="api-keys" element={<ApiKeyManagement />} />
+                  <Route path="sessions" element={<SessionMonitoring />} />
+                  <Route path="settings" element={<UserSettings />} />
+                </Route>
               </Route>
             </Route>
             

@@ -17,6 +17,13 @@ import { apiKeyAuth } from './middleware/auth';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { performanceMiddleware, startPerformanceMonitoring } from './middleware/performance';
 import performanceRoutes from './routes/performance-routes';
+import { 
+  createLogger, 
+  expressLogger, 
+  initializeMessageQueue, 
+  initializeEventBus,
+  EventType
+} from '@liqpro/common';
 
 const logger = new Logger('App');
 
@@ -104,6 +111,128 @@ app.use('/performance', apiKeyAuth, performanceRoutes);
 
 // API路由 - 需要API密钥
 app.use('/api', apiKeyAuth, routes);
+
+// Initialize message queue
+const messageQueue = initializeMessageQueue({
+  host: process.env.RABBITMQ_HOST || 'localhost',
+  port: parseInt(process.env.RABBITMQ_PORT || '5672'),
+  username: process.env.RABBITMQ_USER || 'guest',
+  password: process.env.RABBITMQ_PASSWORD || 'guest',
+  vhost: process.env.RABBITMQ_VHOST || '/'
+});
+
+// Initialize event bus
+const eventBus = initializeEventBus(messageQueue, 'api-service');
+
+// Connect to message queue
+messageQueue.connect()
+  .then(() => {
+    logger.info('Connected to RabbitMQ');
+    return eventBus.initialize();
+  })
+  .then(() => {
+    logger.info('Event bus initialized');
+  })
+  .catch(err => {
+    logger.error('Failed to connect to RabbitMQ', err);
+  });
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// API routes
+app.get('/api/v1/agents', async (req, res) => {
+  try {
+    // This would typically come from a database
+    const agents = [
+      { id: '1', name: 'Agent 1', status: 'active' },
+      { id: '2', name: 'Agent 2', status: 'paused' }
+    ];
+    
+    res.status(200).json(agents);
+  } catch (error) {
+    logger.error('Error fetching agents', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/v1/agents', async (req, res) => {
+  try {
+    const { name, initialFunds, riskLevel } = req.body;
+    
+    // Validate input
+    if (!name || !initialFunds || !riskLevel) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    // Create agent (this would typically be saved to a database)
+    const agentId = `agent-${Date.now()}`;
+    
+    // Publish agent created event
+    await eventBus.publish(EventType.AGENT_CREATED, {
+      agentId,
+      userId: req.body.userId || 'anonymous',
+      name,
+      initialFunds,
+      riskLevel,
+      settings: req.body.settings || {}
+    });
+    
+    res.status(201).json({
+      id: agentId,
+      name,
+      initialFunds,
+      riskLevel,
+      status: 'created'
+    });
+  } catch (error) {
+    logger.error('Error creating agent', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/v1/agents/:agentId/start', async (req, res) => {
+  try {
+    const { agentId } = req.params;
+    
+    // Publish agent started event
+    await eventBus.publish(EventType.AGENT_STARTED, {
+      agentId
+    });
+    
+    res.status(200).json({
+      id: agentId,
+      status: 'started'
+    });
+  } catch (error) {
+    logger.error('Error starting agent', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/v1/agents/:agentId/stop', async (req, res) => {
+  try {
+    const { agentId } = req.params;
+    
+    // Publish agent stopped event
+    await eventBus.publish(EventType.AGENT_STOPPED, {
+      agentId
+    });
+    
+    res.status(200).json({
+      id: agentId,
+      status: 'stopped'
+    });
+  } catch (error) {
+    logger.error('Error stopping agent', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // 根路径
 app.get('/', (req, res) => {

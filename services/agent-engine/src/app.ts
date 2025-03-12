@@ -1,6 +1,16 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import { 
+  createLogger, 
+  expressLogger, 
+  initializeMessageQueue, 
+  initializeEventBus,
+  EventType,
+  Event,
+  AgentCreatedPayload,
+  HttpClient
+} from '@liqpro/common';
 import { Logger } from './utils/logger';
 import { config } from './config';
 import { createCruiseRoutes } from './api/routes/cruiseRoutes';
@@ -22,6 +32,7 @@ export const createApp = (logger: Logger) => {
   app.use(helmet());
   app.use(cors());
   app.use(express.json());
+  app.use(expressLogger());
   
   // 请求日志中间件
   app.use((req, res, next) => {
@@ -31,7 +42,10 @@ export const createApp = (logger: Logger) => {
   
   // 健康检查端点
   app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok' });
+    res.status(200).json({
+      status: 'ok',
+      timestamp: new Date().toISOString()
+    });
   });
   
   // 初始化服务
@@ -63,12 +77,8 @@ export const createApp = (logger: Logger) => {
   
   // 错误处理中间件
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    logger.error(`Unhandled error: ${err.message}`);
-    res.status(500).json({
-      success: false,
-      error: 'Internal Server Error',
-      message: config.isDevelopment ? err.message : 'An unexpected error occurred'
-    });
+    logger.error('Unhandled error', err);
+    res.status(500).json({ error: 'Internal server error' });
   });
   
   // 处理未找到的路由

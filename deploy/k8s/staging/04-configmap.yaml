@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: liqpro-config
+  namespace: liqpro
+data:
+  NODE_ENV: "staging"
+  LOG_LEVEL: "info"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  MONGODB_URI: "mongodb://admin:secret@mongodb:27017/liqpro?authSource=admin"
+  POSTGRES_HOST: "postgres"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "liqpro"
+  POSTGRES_USER: "admin"
+  DATA_SERVICE_URL: "http://data-service:3001"
+  SIGNAL_SERVICE_URL: "http://signal-service:3002"
+  SCORING_SERVICE_URL: "http://scoring-service:3003"
+  AGENT_SERVICE_URL: "http://agent-engine:3004"
+  API_SERVICE_URL: "http://api-service:3000"
+  RABBITMQ_HOST: "rabbitmq"
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_VHOST: "/"
+  RABBITMQ_MANAGEMENT_PORT: "15672" 

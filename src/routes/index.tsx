@@ -1,36 +1,31 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import AgentRoutes from './AgentRoutes';
+import { createBrowserRouter, RouteObject } from 'react-router-dom';
+import AppLayout from '../layouts/AppLayout';
 import Dashboard from '../pages/Dashboard';
-import Login from '../pages/Login';
 import NotFound from '../pages/NotFound';
-import { ProtectedRoute } from './ProtectedRoute';
+import { userManagementRoutes } from './userManagementRoutes';
 
-/**
- * 应用主路由组件
- */
-const AppRoutes: React.FC = () => {
-  return (
-    <Routes>
-      {/* 公共路由 */}
-      <Route path="/login" element={<Login />} />
-      
-      {/* 受保护的路由 */}
-      <Route path="/" element={<ProtectedRoute />}>
-        {/* 仪表盘 */}
-        <Route index element={<Dashboard />} />
-        
-        {/* Agent相关路由 */}
-        <Route path="agents/*" element={<AgentRoutes />} />
-        
-        {/* 重定向根路径到仪表盘 */}
-        <Route path="" element={<Navigate to="/" replace />} />
-      </Route>
-      
-      {/* 404页面 */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  );
-};
+// 定义应用程序路由
+const routes: RouteObject[] = [
+  {
+    path: '/',
+    element: <AppLayout />,
+    children: [
+      {
+        index: true,
+        element: <Dashboard />,
+      },
+      // 集成用户管理系统路由
+      ...userManagementRoutes,
+      {
+        path: '*',
+        element: <NotFound />,
+      },
+    ],
+  },
+];
 
-export default AppRoutes; 
+// 创建路由器
+const router = createBrowserRouter(routes);
+
+export default router; 

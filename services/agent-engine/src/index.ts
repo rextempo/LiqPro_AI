@@ -6,9 +6,11 @@ import { Logger } from './utils/logger';
 import { TransactionExecutor } from './core/TransactionExecutor';
 import { FundsManager } from './core/FundsManager';
 import { RiskController, AgentRiskController } from './core/RiskController';
+import app from './app-new';
+import { createLogger } from '@liqpro/common';
 
 // Initialize logger
-const logger = new Logger({ module: 'AgentEngine' });
+const logger = createLogger('AgentEngineService');
 
 // Initialize core components
 const transactionExecutor = new TransactionExecutor();

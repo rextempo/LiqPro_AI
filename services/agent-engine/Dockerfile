@@ -1,26 +1,40 @@
-FROM node:16-alpine
+FROM node:16-alpine AS builder
 
-# Set up workspace
 WORKDIR /app
 
-# Copy package files
+# Copy package.json and package-lock.json
 COPY package*.json ./
+COPY tsconfig.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci
 
 # Copy source code
-COPY . .
+COPY src/ ./src/
 
-# Build shared libraries and service
-RUN cd libs/common && npm install && npm run build && \
-    cd ../database && npm install && npm run build && \
-    cd ../security && npm install && npm run build && \
-    cd ../../services/agent-engine && npm install && \
-    npx tsc --build
+# Build the application
+RUN npm run build
 
+# Production image
+FROM node:16-alpine
+
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install production dependencies only
+RUN npm ci --only=production
+
+# Copy built application from builder stage
+COPY --from=builder /app/dist ./dist
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=3004
+
+# Expose port
 EXPOSE 3004
 
-# Start the service
-WORKDIR /app/services/agent-engine
-CMD ["npm", "start"] 
+# Start the application
+CMD ["node", "dist/index.js"] 

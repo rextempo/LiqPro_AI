@@ -1,115 +1,91 @@
-# LiqPro Frontend
+# LiqPro Platform
 
-这是LiqPro的前端应用程序，LiqPro是一个专注于Solana区块链上Meteora DLMM流动性池的AI驱动投资平台。
+LiqPro is an AI-driven investment platform focused on Meteora DLMM liquidity pools on the Solana blockchain. The platform helps users automatically capture high-quality LP investment opportunities and execute trades to generate passive income.
 
-## 功能特性
+## Project Structure
 
-- 多种认证方式：钱包登录和API密钥登录
-- 通过WebSocket实现实时数据更新
-- 受保护的路由系统，基于用户角色控制访问权限
-- 响应式设计，适配各种设备尺寸
-- 定时任务管理，支持自动化操作
+```
+LiqPro/
+├── libs/                  # Shared libraries
+│   └── common/            # Common utilities and types
+├── services/              # Microservices
+│   ├── agent-engine/      # Agent execution engine
+│   ├── api-service/       # API gateway
+│   ├── data-service/      # Data collection and storage
+│   ├── signal-service/    # Signal generation
+│   └── scoring-service/   # Risk scoring and analysis
+└── web/                   # Frontend application
+```
 
-## 技术栈
+## Services
 
-- React 18
-- TypeScript
-- Tailwind CSS 用于样式设计
-- React Router v6 用于导航
-- Axios 用于API请求
-- WebSocket 用于实时通信
-- Solana Web3.js 用于区块链交互
+### Agent Engine Service
 
-## 开发状态
+The Agent Engine Service is responsible for managing and executing automated trading strategies. It consumes events from the message queue, processes signals, and executes transactions based on agent configurations.
 
-当前版本: **0.1.0-alpha** (开发中)
+Key features:
+- Event-driven architecture using RabbitMQ
+- Automated agent lifecycle management
+- Signal processing and evaluation
+- Transaction execution
+- Health monitoring and optimization
 
-已完成的功能:
+### API Service
 
-- ✅ 项目基础架构
-- ✅ 认证系统
-- ✅ WebSocket通信
-- ✅ 路由保护
-- ✅ 基础UI组件
+The API Service serves as the gateway for user interactions with the platform. It provides RESTful endpoints for managing agents, viewing performance metrics, and controlling the platform.
 
-正在开发的功能:
+### Data Service
 
-- 🔄 Agent管理界面
-- 🔄 LP池子展示
-- 🔄 资产概况和收益分析
+The Data Service is responsible for collecting, processing, and storing data from various sources, including on-chain data, market data, and platform metrics.
 
-查看 [VERSION.md](./VERSION.md) 获取更多详细信息。
+### Signal Service
 
-## 快速开始
+The Signal Service analyzes market data and generates trading signals based on various indicators and algorithms.
 
-### 前提条件
+### Scoring Service
+
+The Scoring Service evaluates risk and opportunity for potential investments, providing scores that help agents make informed decisions.
+
+## Getting Started
+
+### Prerequisites
 
 - Node.js 16+
-- npm 或 yarn
+- RabbitMQ
+- Docker (optional)
 
-### 安装
+### Installation
 
-1. 克隆仓库
+1. Clone the repository
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Set up environment variables (see `.env.example` files in each service)
+4. Start the services:
+   ```
+   npm run start:dev
+   ```
 
-```bash
-git clone https://github.com/yourusername/liqpro.git
-cd liqpro
-```
+## Development
 
-2. 安装依赖
+### Running Individual Services
 
-```bash
-npm install
-```
-
-3. 启动开发服务器
-
-```bash
-npm start
-```
-
-应用程序将在 http://localhost:3000 可用。
-
-## 项目结构
+Each service can be run independently:
 
 ```
-src/
-├── api/              # API客户端实现
-│   └── clients/      # 各种API客户端
-├── components/       # 可复用UI组件
-├── contexts/         # React上下文提供者
-├── config/           # 应用配置
-├── core/             # 核心功能实现
-├── types/            # TypeScript类型定义
-├── utils/            # 工具函数
-├── App.tsx           # 主应用组件
-└── index.tsx         # 应用入口点
+cd services/agent-engine
+npm run dev
 ```
 
-## 可用脚本
+### Docker Compose
 
-- `npm start` - 启动开发服务器
-- `npm build` - 构建生产版本
-- `npm test` - 运行测试套件
-- `npm lint` - 运行代码检查
-- `npm lint:fix` - 修复代码检查问题
+You can also use Docker Compose to run all services:
 
-## 安全考虑
+```
+docker-compose up
+```
 
-- 所有API请求都使用JWT令牌进行认证
-- 令牌过期时自动刷新
-- 敏感数据从不以明文形式存储在本地存储中
-- 受保护的路由确保适当的授权
-- WebSocket连接使用安全会话管理
+## License
 
-## 贡献指南
-
-1. Fork 仓库
-2. 创建功能分支 (`git checkout -b feature/amazing-feature`)
-3. 提交更改 (`git commit -m 'Add some amazing feature'`)
-4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 创建Pull Request
-
-## 许可证
-
-本项目采用MIT许可证 - 详情请参阅LICENSE文件。
+This project is proprietary and confidential. Unauthorized copying, distribution, or use is strictly prohibited.
