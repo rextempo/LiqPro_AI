@@ -6,18 +6,17 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
+# Copy libs directory
+COPY libs/ ./libs/
+
+# Copy services/signal-service directory
+COPY services/signal-service/ ./services/signal-service/
+
 # Install dependencies
-RUN npm install
-
-# Copy source code
-COPY . .
-
-# Build shared libraries and service
 RUN cd libs/common && npm install && npm run build && \
     cd ../database && npm install && npm run build && \
     cd ../security && npm install && npm run build && \
-    cd ../../services/signal-service && npm install && \
-    npx tsc --build
+    cd ../../services/signal-service && npm install && npm run build
 
 EXPOSE 3002
 

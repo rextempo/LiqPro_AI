@@ -15,6 +15,7 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import { FiSettings, FiUser } from 'react-icons/fi';
+import { IconWrapper, ButtonIcon } from '../IconWrapper';
 import WalletConnect from '../WalletConnect';
 import NotificationCenter from '../NotificationCenter';
 
@@ -51,7 +52,7 @@ const Navbar: React.FC = () => {
             as={RouterLink}
             to="/settings"
             aria-label="Settings"
-            icon={<FiSettings />}
+            icon={<ButtonIcon icon={FiSettings} />}
             variant="ghost"
             colorScheme="gray"
             fontSize="20px"
@@ -62,7 +63,7 @@ const Navbar: React.FC = () => {
               <Avatar size="sm" name="User" bg="primary.500" />
             </MenuButton>
             <MenuList>
-              <MenuItem icon={<FiUser />}>Profile</MenuItem>
+              <MenuItem icon={<ButtonIcon icon={FiUser} />}>Profile</MenuItem>
               <MenuItem>Logout</MenuItem>
             </MenuList>
           </Menu>

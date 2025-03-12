@@ -24,6 +24,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { FiInfo, FiArrowRight } from 'react-icons/fi';
+import { ButtonIcon, IconWrapper } from '../components/IconWrapper';
 
 import { StrategySettings } from '../components/AgentDetail';
 
@@ -201,7 +202,7 @@ const CreateAgentPage: React.FC = () => {
                 <FormLabel>
                   策略类型
                   <Tooltip label="选择预设的策略类型，影响风险偏好和收益目标" placement="top">
-                    <Icon as={FiInfo} ml={1} fontSize="xs" />
+                    <IconWrapper icon={FiInfo} ml={1} fontSize="xs" />
                   </Tooltip>
                 </FormLabel>
                 <Select 
@@ -219,7 +220,7 @@ const CreateAgentPage: React.FC = () => {
                 <FormLabel htmlFor="autoRebalance" mb="0">
                   自动再平衡
                   <Tooltip label="开启后，Agent将根据市场情况自动调整仓位" placement="top">
-                    <Icon as={FiInfo} ml={1} fontSize="xs" />
+                    <IconWrapper icon={FiInfo} ml={1} fontSize="xs" />
                   </Tooltip>
                 </FormLabel>
                 <Switch 
@@ -285,7 +286,7 @@ const CreateAgentPage: React.FC = () => {
           <Button 
             onClick={handleNextStep} 
             colorScheme="primary"
-            rightIcon={step < 3 ? <FiArrowRight /> : undefined}
+            rightIcon={step < 3 ? <ButtonIcon icon={FiArrowRight} /> : undefined}
           >
             {step < 3 ? '下一步' : '创建Agent'}
           </Button>

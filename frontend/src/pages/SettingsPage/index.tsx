@@ -21,6 +21,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { FiSave, FiDownload } from 'react-icons/fi';
+import { ButtonIcon } from '../../components/IconWrapper';
 
 const SettingsPage: React.FC = () => {
   const [fundAmount, setFundAmount] = useState<string>('0');
@@ -82,7 +83,7 @@ const SettingsPage: React.FC = () => {
             
             <Button
               colorScheme="primary"
-              leftIcon={<FiSave />}
+              leftIcon={<ButtonIcon icon={FiSave} />}
               isDisabled={parseFloat(fundAmount) <= 0}
             >
               充值
@@ -109,7 +110,7 @@ const SettingsPage: React.FC = () => {
             <Button
               colorScheme="primary"
               variant="outline"
-              leftIcon={<FiDownload />}
+              leftIcon={<ButtonIcon icon={FiDownload} />}
               isDisabled={parseFloat(withdrawAmount) <= 0}
             >
               提取
@@ -153,7 +154,7 @@ const SettingsPage: React.FC = () => {
             
             <Button
               colorScheme="primary"
-              leftIcon={<FiSave />}
+              leftIcon={<ButtonIcon icon={FiSave} />}
               onClick={handleSaveSettings}
             >
               保存设置
@@ -201,7 +202,7 @@ const SettingsPage: React.FC = () => {
             
             <Button
               colorScheme="primary"
-              leftIcon={<FiSave />}
+              leftIcon={<ButtonIcon icon={FiSave} />}
               onClick={handleSaveSettings}
               mt={2}
             >

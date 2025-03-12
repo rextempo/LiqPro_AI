@@ -15,6 +15,7 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import { FiAlertTriangle } from 'react-icons/fi';
+import IconWrapper from '../IconWrapper';
 
 interface EmergencyExitModalProps {
   isOpen: boolean;
@@ -47,7 +48,7 @@ const EmergencyExitModal: React.FC<EmergencyExitModalProps> = ({
               display="flex"
               alignItems="center"
             >
-              <Icon as={FiAlertTriangle} color="danger.500" boxSize={6} mr={3} />
+              <IconWrapper icon={FiAlertTriangle} color="danger.500" boxSize={6} mr={3} />
               <Text fontWeight="medium" color="danger.500">
                 此操作将立即清算所有仓位，无论当前市场状况如何。
               </Text>

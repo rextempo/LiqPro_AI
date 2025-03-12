@@ -26,6 +26,7 @@ import {
   Spinner,
 } from '@chakra-ui/react';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { ButtonIcon } from '../../components/IconWrapper';
 import { useAuth } from '../../contexts/AuthContext';
 import WalletConnect from '../../components/WalletConnect';
 
@@ -202,7 +203,7 @@ const LoginPage: React.FC = () => {
                             <InputRightElement>
                               <IconButton
                                 aria-label={showApiKey ? '隐藏API密钥' : '显示API密钥'}
-                                icon={showApiKey ? <FiEyeOff /> : <FiEye />}
+                                icon={showApiKey ? <ButtonIcon icon={FiEyeOff} /> : <ButtonIcon icon={FiEye} />}
                                 variant="ghost"
                                 onClick={toggleApiKeyVisibility}
                               />

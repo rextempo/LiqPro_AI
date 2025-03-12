@@ -1,6 +1,6 @@
 {
   "name": "@liqpro/common",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Common utilities and shared code for LiqPro services",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

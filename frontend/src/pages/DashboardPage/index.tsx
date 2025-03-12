@@ -23,6 +23,7 @@ import {
   Badge,
 } from '@chakra-ui/react';
 import { FiPlus, FiPlay, FiPause } from 'react-icons/fi';
+import { ButtonIcon } from '../../components/IconWrapper';
 
 // 导入我们刚刚创建的组件
 import {
@@ -40,27 +41,27 @@ const mockAgents = [
   {
     id: '1',
     name: 'Agent Alpha',
-    status: 'running',
+    status: 'running' as const,
     yield24h: 2.34,
-    yieldTrend: 'up',
+    yieldTrend: 'up' as const,
     assetValueSOL: 12.345,
     assetValueUSD: 1234.56,
   },
   {
     id: '2',
     name: 'Agent Beta',
-    status: 'observing',
+    status: 'observing' as const,
     yield24h: 1.12,
-    yieldTrend: 'down',
+    yieldTrend: 'down' as const,
     assetValueSOL: 8.765,
     assetValueUSD: 876.54,
   },
   {
     id: '3',
     name: 'Agent Gamma',
-    status: 'stopped',
+    status: 'stopped' as const,
     yield24h: 0,
-    yieldTrend: 'neutral',
+    yieldTrend: 'neutral' as const,
     assetValueSOL: 5.432,
     assetValueUSD: 543.21,
   },
@@ -84,13 +85,13 @@ const DashboardPage: React.FC = () => {
           Dashboard
         </Heading>
         <Button
-          leftIcon={<FiPlus />}
+          leftIcon={<ButtonIcon icon={FiPlus} />}
           colorScheme="primary"
           size="md"
           as={RouterLink}
-          to="/agent/create"
+          to="/create-agent"
         >
-          创建新Agent
+          创建Agent
         </Button>
       </Flex>
 

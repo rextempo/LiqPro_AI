@@ -17,6 +17,7 @@ import {
   Tooltip,
 } from '@chakra-ui/react';
 import { FiInfo, FiExternalLink, FiFilter } from 'react-icons/fi';
+import { IconWrapper, ButtonIcon } from '../IconWrapper';
 
 // 信号类型
 type SignalType = 'buy' | 'sell' | 'add_liquidity' | 'remove_liquidity';
@@ -143,7 +144,7 @@ const SignalsList: React.FC = () => {
         <Heading size="md">最新信号</Heading>
         <Flex>
           <Button 
-            leftIcon={<FiFilter />} 
+            leftIcon={<ButtonIcon icon={FiFilter} />} 
             variant="ghost" 
             size="sm"
             mr={2}
@@ -151,7 +152,7 @@ const SignalsList: React.FC = () => {
             {filter === 'all' ? '全部' : getSignalTypeInfo(filter as SignalType).text}
           </Button>
           <Button 
-            rightIcon={<FiExternalLink />} 
+            rightIcon={<ButtonIcon icon={FiExternalLink} />} 
             variant="outline" 
             size="sm"
             colorScheme="primary"
@@ -189,7 +190,7 @@ const SignalsList: React.FC = () => {
                     <Flex justifyContent="flex-end" alignItems="center">
                       <Text mr={1}>{(signal.confidence * 100).toFixed(0)}%</Text>
                       <Tooltip label="置信度表示模型对该信号的确信程度">
-                        <span><Icon as={FiInfo} boxSize={3} color="gray.500" /></span>
+                        <span><IconWrapper icon={FiInfo} boxSize={3} color="gray.500" /></span>
                       </Tooltip>
                     </Flex>
                   </Td>

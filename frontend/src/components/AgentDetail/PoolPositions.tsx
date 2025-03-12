@@ -10,6 +10,7 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import { FiX } from 'react-icons/fi';
+import { ButtonIcon } from '../IconWrapper';
 
 interface PoolPosition {
   id: string;
@@ -117,7 +118,7 @@ const PoolPositions: React.FC<PoolPositionsProps> = ({ positions, mb }) => {
             <Button
               size="sm"
               width="full"
-              leftIcon={<FiX />}
+              leftIcon={<ButtonIcon icon={FiX} />}
               variant="outline"
               colorScheme="gray"
             >

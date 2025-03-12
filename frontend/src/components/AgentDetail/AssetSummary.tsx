@@ -15,14 +15,16 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 
+type TimeRangeType = '24h' | '7d' | '30d' | 'all';
+
 interface AssetSummaryProps {
   assetValueSOL: number;
   assetValueUSD: number;
   totalProfitSOL: number;
   totalProfitUSD: number;
   totalProfitPercent: number;
-  timeRange: string;
-  onTimeRangeChange: (range: string) => void;
+  timeRange: TimeRangeType;
+  onTimeRangeChange: (range: TimeRangeType) => void;
   apr: number;
   feeIncome: number;
   tokenValueChange: number;

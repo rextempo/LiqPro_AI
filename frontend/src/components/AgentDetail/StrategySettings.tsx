@@ -26,6 +26,7 @@ import {
   Divider,
 } from '@chakra-ui/react';
 import { FiInfo, FiSave, FiRefreshCw } from 'react-icons/fi';
+import { IconWrapper, ButtonIcon } from '../IconWrapper';
 
 interface StrategySettingsProps {
   isEditable?: boolean;
@@ -124,7 +125,7 @@ const StrategySettings: React.FC<StrategySettingsProps> = ({
         {isEditable && (
           <Flex gap={2}>
             <Button 
-              leftIcon={<FiRefreshCw />} 
+              leftIcon={<ButtonIcon icon={FiRefreshCw} />} 
               variant="outline" 
               size="sm"
               onClick={handleReset}
@@ -132,7 +133,7 @@ const StrategySettings: React.FC<StrategySettingsProps> = ({
               重置
             </Button>
             <Button 
-              leftIcon={<FiSave />} 
+              leftIcon={<ButtonIcon icon={FiSave} />} 
               colorScheme="primary" 
               size="sm"
               onClick={handleSave}
@@ -158,7 +159,7 @@ const StrategySettings: React.FC<StrategySettingsProps> = ({
               <FormLabel>
                 策略类型
                 <Tooltip label="选择预设的策略类型，影响风险偏好和收益目标">
-                  <Icon as={FiInfo} ml={1} fontSize="xs" />
+                  <IconWrapper icon={FiInfo} ml={1} fontSize="xs" />
                 </Tooltip>
               </FormLabel>
               <Select 
@@ -177,7 +178,7 @@ const StrategySettings: React.FC<StrategySettingsProps> = ({
               <FormLabel htmlFor="autoRebalance" mb="0">
                 自动再平衡
                 <Tooltip label="开启后，Agent将根据市场情况自动调整仓位">
-                  <Icon as={FiInfo} ml={1} fontSize="xs" />
+                  <IconWrapper icon={FiInfo} ml={1} fontSize="xs" />
                 </Tooltip>
               </FormLabel>
               <Switch 
@@ -193,7 +194,7 @@ const StrategySettings: React.FC<StrategySettingsProps> = ({
               <FormLabel>
                 再平衡阈值 (%)
                 <Tooltip label="当资产配置偏离目标配置超过此百分比时触发再平衡">
-                  <Icon as={FiInfo} ml={1} fontSize="xs" />
+                  <IconWrapper icon={FiInfo} ml={1} fontSize="xs" />
                 </Tooltip>
               </FormLabel>
               <NumberInput 
@@ -215,7 +216,7 @@ const StrategySettings: React.FC<StrategySettingsProps> = ({
               <FormLabel>
                 最大滑点 (%)
                 <Tooltip label="交易执行时允许的最大价格滑点百分比">
-                  <Icon as={FiInfo} ml={1} fontSize="xs" />
+                  <IconWrapper icon={FiInfo} ml={1} fontSize="xs" />
                 </Tooltip>
               </FormLabel>
               <NumberInput 
@@ -251,7 +252,7 @@ const StrategySettings: React.FC<StrategySettingsProps> = ({
               <FormLabel>
                 最大回撤 (%)
                 <Tooltip label="允许的最大回撤百分比，超过此值将触发风险控制机制">
-                  <Icon as={FiInfo} ml={1} fontSize="xs" />
+                  <IconWrapper icon={FiInfo} ml={1} fontSize="xs" />
                 </Tooltip>
               </FormLabel>
               <NumberInput 
@@ -273,7 +274,7 @@ const StrategySettings: React.FC<StrategySettingsProps> = ({
               <FormLabel>
                 止损 (%)
                 <Tooltip label="单个仓位的止损百分比，达到此值将自动平仓">
-                  <Icon as={FiInfo} ml={1} fontSize="xs" />
+                  <IconWrapper icon={FiInfo} ml={1} fontSize="xs" />
                 </Tooltip>
               </FormLabel>
               <NumberInput 
@@ -295,7 +296,7 @@ const StrategySettings: React.FC<StrategySettingsProps> = ({
               <FormLabel>
                 止盈 (%)
                 <Tooltip label="单个仓位的止盈百分比，达到此值将自动平仓">
-                  <Icon as={FiInfo} ml={1} fontSize="xs" />
+                  <IconWrapper icon={FiInfo} ml={1} fontSize="xs" />
                 </Tooltip>
               </FormLabel>
               <NumberInput 
@@ -329,7 +330,7 @@ const StrategySettings: React.FC<StrategySettingsProps> = ({
               <FormLabel>
                 最大单池分配 (%)
                 <Tooltip label="单个池子的最大资金分配百分比">
-                  <Icon as={FiInfo} ml={1} fontSize="xs" />
+                  <IconWrapper icon={FiInfo} ml={1} fontSize="xs" />
                 </Tooltip>
               </FormLabel>
               <NumberInput 
@@ -351,7 +352,7 @@ const StrategySettings: React.FC<StrategySettingsProps> = ({
               <FormLabel>
                 最小流动性保留 (%)
                 <Tooltip label="保留为流动性（未投资）的资金百分比">
-                  <Icon as={FiInfo} ml={1} fontSize="xs" />
+                  <IconWrapper icon={FiInfo} ml={1} fontSize="xs" />
                 </Tooltip>
               </FormLabel>
               <NumberInput 
@@ -373,7 +374,7 @@ const StrategySettings: React.FC<StrategySettingsProps> = ({
               <FormLabel>
                 目标年化收益率 (%)
                 <Tooltip label="策略的目标年化收益率，影响风险偏好">
-                  <Icon as={FiInfo} ml={1} fontSize="xs" />
+                  <IconWrapper icon={FiInfo} ml={1} fontSize="xs" />
                 </Tooltip>
               </FormLabel>
               <NumberInput 
@@ -406,7 +407,7 @@ const StrategySettings: React.FC<StrategySettingsProps> = ({
               <FormLabel>
                 信号置信度阈值
                 <Tooltip label="执行交易所需的最小信号置信度百分比">
-                  <Icon as={FiInfo} ml={1} fontSize="xs" />
+                  <IconWrapper icon={FiInfo} ml={1} fontSize="xs" />
                 </Tooltip>
               </FormLabel>
               <Flex>
@@ -435,7 +436,7 @@ const StrategySettings: React.FC<StrategySettingsProps> = ({
               <FormLabel>
                 最小池子TVL ($)
                 <Tooltip label="考虑投资的池子的最小总锁仓价值">
-                  <Icon as={FiInfo} ml={1} fontSize="xs" />
+                  <IconWrapper icon={FiInfo} ml={1} fontSize="xs" />
                 </Tooltip>
               </FormLabel>
               <NumberInput 
@@ -458,7 +459,7 @@ const StrategySettings: React.FC<StrategySettingsProps> = ({
               <FormLabel>
                 最大池子风险
                 <Tooltip label="允许投资的池子的最大风险等级">
-                  <Icon as={FiInfo} ml={1} fontSize="xs" />
+                  <IconWrapper icon={FiInfo} ml={1} fontSize="xs" />
                 </Tooltip>
               </FormLabel>
               <Select 
@@ -476,7 +477,7 @@ const StrategySettings: React.FC<StrategySettingsProps> = ({
               <FormLabel htmlFor="prioritizeStablePairs" mb="0">
                 优先稳定币交易对
                 <Tooltip label="开启后，优先考虑包含稳定币的交易对">
-                  <Icon as={FiInfo} ml={1} fontSize="xs" />
+                  <IconWrapper icon={FiInfo} ml={1} fontSize="xs" />
                 </Tooltip>
               </FormLabel>
               <Switch 

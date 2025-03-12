@@ -24,8 +24,10 @@ import {
   FiAlertCircle, 
   FiCheckCircle, 
   FiXCircle,
-  FiTrash2
+  FiTrash2,
+  FiAlertTriangle
 } from 'react-icons/fi';
+import { IconWrapper, ButtonIcon } from '../IconWrapper';
 
 // 通知类型
 type NotificationType = 'info' | 'success' | 'warning' | 'error';
@@ -132,7 +134,7 @@ const NotificationCenter: React.FC = () => {
         <Box position="relative">
           <IconButton
             aria-label="Notifications"
-            icon={<FiBell />}
+            icon={<ButtonIcon icon={FiBell} />}
             variant="ghost"
             colorScheme="gray"
             fontSize="20px"
@@ -176,7 +178,7 @@ const NotificationCenter: React.FC = () => {
               {notifications.length > 0 && (
                 <IconButton
                   aria-label="Clear all"
-                  icon={<FiTrash2 />}
+                  icon={<ButtonIcon icon={FiTrash2} />}
                   size="xs"
                   variant="ghost"
                   onClick={clearAllNotifications}
@@ -204,8 +206,8 @@ const NotificationCenter: React.FC = () => {
                 >
                   <Flex>
                     <Box mr={3}>
-                      <Icon
-                        as={getNotificationIcon(notification.type)}
+                      <IconWrapper
+                        icon={getNotificationIcon(notification.type)}
                         color={getNotificationColor(notification.type)}
                         boxSize={5}
                       />

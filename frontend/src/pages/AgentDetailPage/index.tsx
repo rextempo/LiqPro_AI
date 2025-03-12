@@ -26,6 +26,9 @@ import PoolPositions from '../../components/AgentDetail/PoolPositions';
 import TransactionHistory from '../../components/AgentDetail/TransactionHistory';
 import EmergencyExitModal from '../../components/AgentDetail/EmergencyExitModal';
 
+// 定义时间范围类型
+type TimeRangeType = '24h' | '7d' | '30d' | 'all';
+
 // Mock data
 const mockAgentData = {
   id: '1',
@@ -103,7 +106,7 @@ const mockTransactions = [
 
 const AgentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [timeRange, setTimeRange] = useState<string>('7d');
+  const [timeRange, setTimeRange] = useState<TimeRangeType>('7d');
   const { isOpen, onOpen, onClose } = useDisclosure();
   
   const cardBg = useColorModeValue('white', 'gray.800');

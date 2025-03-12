@@ -20,6 +20,7 @@ import {
   Icon,
 } from '@chakra-ui/react';
 import { FiExternalLink, FiInfo, FiTrendingUp, FiTrendingDown } from 'react-icons/fi';
+import { IconWrapper, ButtonIcon } from '../IconWrapper';
 
 // 池子接口
 interface Pool {
@@ -214,7 +215,7 @@ const PoolsOverview: React.FC = () => {
       >
         <Heading size="md">热门池子</Heading>
         <Button 
-          rightIcon={<FiExternalLink />} 
+          rightIcon={<ButtonIcon icon={FiExternalLink} />} 
           variant="outline" 
           size="sm"
           colorScheme="primary"
@@ -303,8 +304,8 @@ const PoolsOverview: React.FC = () => {
                   <Td isNumeric>
                     <Flex justifyContent="flex-end" alignItems="center">
                       <Text mr={1}>{formatNumber(pool.volume24h)}</Text>
-                      <Icon 
-                        as={pool.volumeChange >= 0 ? FiTrendingUp : FiTrendingDown} 
+                      <IconWrapper 
+                        icon={pool.volumeChange >= 0 ? FiTrendingUp : FiTrendingDown} 
                         color={pool.volumeChange >= 0 ? 'success.500' : 'danger.500'}
                         boxSize={4}
                       />

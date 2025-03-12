@@ -1,40 +1,32 @@
-FROM node:16-alpine AS builder
-
-WORKDIR /app
-
-# Copy package.json and package-lock.json
-COPY package*.json ./
-COPY tsconfig.json ./
-
-# Install dependencies
-RUN npm ci
-
-# Copy source code
-COPY src/ ./src/
-
-# Build the application
-RUN npm run build
-
-# Production image
 FROM node:16-alpine
 
+# 设置工作目录
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# 复制项目根目录的package.json
 COPY package*.json ./
 
-# Install production dependencies only
-RUN npm ci --only=production
+# 复制libs目录
+COPY libs/ ./libs/
 
-# Copy built application from builder stage
-COPY --from=builder /app/dist ./dist
+# 复制services/agent-engine目录
+COPY services/agent-engine/ ./services/agent-engine/
 
-# Set environment variables
+# 安装依赖并构建
+RUN cd libs/common && npm install && npm run build && \
+    cd ../database && npm install && npm run build && \
+    cd ../security && npm install && npm run build && \
+    cd ../../services/agent-engine && npm install && npm run build
+
+# 设置工作目录
+WORKDIR /app/services/agent-engine
+
+# 设置环境变量
 ENV NODE_ENV=production
 ENV PORT=3004
 
-# Expose port
+# 暴露端口
 EXPOSE 3004
 
-# Start the application
-CMD ["node", "dist/index.js"] 
+# 启动服务
+CMD ["npm", "start"] 

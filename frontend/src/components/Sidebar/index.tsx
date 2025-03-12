@@ -17,9 +17,11 @@ import {
   FiSettings,
   FiPlusCircle,
 } from 'react-icons/fi';
+import { IconType } from 'react-icons';
+import { IconWrapper } from '../IconWrapper';
 
 interface NavItemProps {
-  icon: React.ElementType;
+  icon: IconType;
   to: string;
   children: React.ReactNode;
   isActive?: boolean;
@@ -39,8 +41,8 @@ const NavItem: React.FC<NavItemProps> = ({ icon, to, children, isActive }) => {
     >
       <Flex
         align="center"
-        p="3"
-        mx="2"
+        p="4"
+        mx="4"
         borderRadius="lg"
         role="group"
         cursor="pointer"
@@ -49,17 +51,8 @@ const NavItem: React.FC<NavItemProps> = ({ icon, to, children, isActive }) => {
         _hover={{
           bg: isActive ? activeBg : hoverBg,
         }}
-        fontWeight={isActive ? 'medium' : 'normal'}
       >
-        <Icon
-          mr="3"
-          fontSize="18"
-          as={icon}
-          color={isActive ? 'primary.500' : 'gray.500'}
-          _groupHover={{
-            color: isActive ? 'primary.500' : 'primary.400',
-          }}
-        />
+        <IconWrapper icon={icon} mr="4" fontSize="16" />
         {children}
       </Flex>
     </Link>

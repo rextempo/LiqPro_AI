@@ -8,6 +8,7 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { ButtonIcon } from '../IconWrapper';
 
 interface AgentLogProps {
   mb?: number | string;
@@ -95,7 +96,7 @@ const AgentLog: React.FC<AgentLogProps> = ({ mb }) => {
         <Button
           size="sm"
           variant="ghost"
-          rightIcon={expanded ? <FiChevronUp /> : <FiChevronDown />}
+          rightIcon={expanded ? <ButtonIcon icon={FiChevronUp} /> : <ButtonIcon icon={FiChevronDown} />}
           onClick={() => setExpanded(!expanded)}
         >
           {expanded ? '收起' : '展开'}

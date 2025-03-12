@@ -1,164 +1,40 @@
 version: '3.8'
 
 services:
-  # Message broker
-  rabbitmq:
-    image: rabbitmq:3.11-management
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
-    networks:
-      - liqpro-network
-    healthcheck:
-      test: ["CMD", "rabbitmqctl", "status"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  # API Gateway
-  api-service:
+  # 前端应用
+  frontend:
     build:
-      context: ./services/api-service
+      context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=development
-      - PORT=3000
-      - LOG_LEVEL=debug
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
-      - RABBITMQ_VHOST=/
-    depends_on:
-      - rabbitmq
+      - REACT_APP_API_URL=http://localhost:3001
+      - REACT_APP_WS_URL=ws://localhost:3001/ws
     volumes:
-      - ./services/api-service/src:/app/src
-      - ./services/api-service/dist:/app/dist
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
     networks:
       - liqpro-network
-    command: ["npm", "run", "dev"]
 
-  # Data Service
-  data-service:
-    build:
-      context: ./services/data-service
-      dockerfile: Dockerfile
+  # API服务（简化版）
+  api-service:
+    image: node:18-alpine
+    working_dir: /app/services/api-service
     ports:
       - "3001:3001"
+    volumes:
+      - ./services/api-service:/app/services/api-service
     environment:
       - NODE_ENV=development
       - PORT=3001
-      - LOG_LEVEL=debug
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
-      - RABBITMQ_VHOST=/
-      - SOLANA_RPC_URL=https://api.devnet.solana.com
-    depends_on:
-      - rabbitmq
-    volumes:
-      - ./services/data-service/src:/app/src
-      - ./services/data-service/dist:/app/dist
     networks:
       - liqpro-network
-    command: ["npm", "run", "dev"]
-
-  # Signal Service
-  signal-service:
-    build:
-      context: ./services/signal-service
-      dockerfile: Dockerfile
-    ports:
-      - "3002:3002"
-    environment:
-      - NODE_ENV=development
-      - PORT=3002
-      - LOG_LEVEL=debug
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
-      - RABBITMQ_VHOST=/
-      - DATA_SERVICE_URL=http://data-service:3001
-    depends_on:
-      - rabbitmq
-      - data-service
-    volumes:
-      - ./services/signal-service/src:/app/src
-      - ./services/signal-service/dist:/app/dist
-    networks:
-      - liqpro-network
-    command: ["npm", "run", "dev"]
-
-  # Scoring Service
-  scoring-service:
-    build:
-      context: ./services/scoring-service
-      dockerfile: Dockerfile
-    ports:
-      - "3003:3003"
-    environment:
-      - NODE_ENV=development
-      - PORT=3003
-      - LOG_LEVEL=debug
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
-      - RABBITMQ_VHOST=/
-      - DATA_SERVICE_URL=http://data-service:3001
-    depends_on:
-      - rabbitmq
-      - data-service
-    volumes:
-      - ./services/scoring-service/src:/app/src
-      - ./services/scoring-service/dist:/app/dist
-    networks:
-      - liqpro-network
-    command: ["npm", "run", "dev"]
-
-  # Agent Engine
-  agent-engine:
-    build:
-      context: ./services/agent-engine
-      dockerfile: Dockerfile
-    ports:
-      - "3004:3004"
-    environment:
-      - NODE_ENV=development
-      - PORT=3004
-      - LOG_LEVEL=debug
-      - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_PORT=5672
-      - RABBITMQ_USER=guest
-      - RABBITMQ_PASSWORD=guest
-      - RABBITMQ_VHOST=/
-      - DATA_SERVICE_URL=http://data-service:3001
-      - SIGNAL_SERVICE_URL=http://signal-service:3002
-      - SCORING_SERVICE_URL=http://scoring-service:3003
-    depends_on:
-      - rabbitmq
-      - data-service
-      - signal-service
-      - scoring-service
-    volumes:
-      - ./services/agent-engine/src:/app/src
-      - ./services/agent-engine/dist:/app/dist
-    networks:
-      - liqpro-network
-    command: ["npm", "run", "dev"]
+    command: >
+      sh -c "npm install && 
+             npm run dev"
 
 networks:
   liqpro-network:
-    driver: bridge
-
-volumes:
-  rabbitmq-data: 
+    driver: bridge 

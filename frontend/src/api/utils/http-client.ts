@@ -285,77 +285,104 @@ export class HttpClient {
    * 处理响应
    */
   private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
-    const contentType = response.headers.get('content-type');
-    let data: any;
-    
-    // 解析响应体
-    if (contentType && contentType.includes('application/json')) {
-      data = await response.json();
-    } else {
-      data = await response.text();
-    }
-    
-    // 检查HTTP状态码
-    if (!response.ok) {
-      const error: ApiError = {
-        code: response.status.toString(),
-        message: data.message || response.statusText,
-        details: data.error || data,
-      };
+    try {
+      // 获取响应文本
+      const text = await response.text();
       
-      throw { error, response };
+      // 尝试解析为JSON
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (e) {
+        console.error('API响应解析失败:', e);
+        console.log('原始响应:', text);
+        return {
+          success: false,
+          error: {
+            code: 'parse_error',
+            message: '无法解析API响应',
+            details: { responseText: text }
+          },
+          timestamp: new Date().toISOString()
+        };
+      }
+      
+      // 检查HTTP状态码
+      if (!response.ok) {
+        console.error(`API请求失败: ${response.status} ${response.statusText}`, data);
+        return {
+          success: false,
+          error: {
+            code: data.error?.code || `http_${response.status}`,
+            message: data.error?.message || data.message || response.statusText,
+            details: data.error?.details || data
+          },
+          timestamp: data.timestamp || new Date().toISOString()
+        };
+      }
+      
+      // 成功响应
+      return {
+        success: true,
+        data: data.data || data,
+        message: data.message,
+        timestamp: data.timestamp || new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('处理API响应时发生错误:', error);
+      return {
+        success: false,
+        error: {
+          code: 'response_processing_error',
+          message: error instanceof Error ? error.message : '处理响应时发生未知错误',
+          details: { error }
+        },
+        timestamp: new Date().toISOString()
+      };
     }
-    
-    // 标准化响应格式
-    const apiResponse: ApiResponse<T> = {
-      success: true,
-      data: data.data || data,
-      message: data.message,
-      timestamp: data.timestamp || new Date().toISOString(),
-    };
-    
-    return apiResponse;
   }
 
   /**
    * 处理错误
    */
   private handleError<T>(error: Error | any): ApiResponse<T> {
-    // 构造标准错误响应
-    const apiError: ApiError = {
-      code: 'unknown_error',
-      message: error.message || 'Unknown error occurred',
-    };
+    console.error('API请求错误:', error);
     
-    // 如果是API错误，使用API返回的错误信息
-    if (error.error) {
-      apiError.code = error.error.code;
-      apiError.message = error.error.message;
-      apiError.details = error.error.details;
+    // 网络错误
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      return {
+        success: false,
+        error: {
+          code: 'network_error',
+          message: '网络连接失败，请检查您的互联网连接',
+          details: { originalError: error.message }
+        },
+        timestamp: new Date().toISOString()
+      };
     }
     
-    // 如果是AbortError，表示请求被取消
-    if (error.name === 'AbortError') {
-      apiError.code = 'request_aborted';
-      apiError.message = 'Request was aborted';
+    // 超时错误
+    if (error.name === 'AbortError' || error.code === 'timeout') {
+      return {
+        success: false,
+        error: {
+          code: 'timeout',
+          message: '请求超时，请稍后重试',
+          details: { originalError: error.message }
+        },
+        timestamp: new Date().toISOString()
+      };
     }
     
-    // 如果是超时错误
-    if (error.message && error.message.includes('timeout')) {
-      apiError.code = 'request_timeout';
-      apiError.message = 'Request timed out';
-    }
-    
-    // 如果是网络错误
-    if (error.message && error.message.includes('network')) {
-      apiError.code = 'network_error';
-      apiError.message = 'Network error occurred';
-    }
-    
+    // 其他错误
     return {
       success: false,
-      error: apiError,
-      timestamp: new Date().toISOString(),
+      error: {
+        code: error.code || 'unknown_error',
+        message: error.message || '发生未知错误',
+        details: error.details || { originalError: error }
+      },
+      timestamp: new Date().toISOString()
     };
   }
 

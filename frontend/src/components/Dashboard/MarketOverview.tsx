@@ -15,6 +15,8 @@ import {
   Icon,
 } from '@chakra-ui/react';
 import { FiTrendingUp, FiTrendingDown, FiDollarSign, FiActivity } from 'react-icons/fi';
+import { IconType } from 'react-icons';
+import { IconWrapper } from '../IconWrapper';
 
 // 模拟市场数据
 const marketData = {
@@ -32,7 +34,7 @@ interface MarketStatProps {
   label: string;
   value: string | number;
   change?: number;
-  icon: React.ElementType;
+  icon: IconType;
   format?: (value: number) => string;
 }
 
@@ -56,7 +58,7 @@ const MarketStat: React.FC<MarketStatProps> = ({
       boxShadow="sm"
     >
       <Flex alignItems="center" mb={2}>
-        <Icon as={icon} boxSize={5} color="primary.500" mr={2} />
+        <IconWrapper icon={icon} boxSize={5} color="primary.500" mr={2} />
         <Text fontWeight="medium" color="gray.500">{label}</Text>
       </Flex>
       <Stat>

@@ -123,6 +123,19 @@ export interface Agent {
   settings?: Record<string, any>;
 }
 
+// Agent更新接口
+export interface AgentUpdate {
+  agentId: string;
+  timestamp: string;
+  status: AgentStatus;
+  assetValueSOL: number;
+  assetValueUSD: number;
+  yield24h: number;
+  yieldTrend: 'up' | 'down' | 'neutral';
+  recentTransactions?: Transaction[];
+  metadata?: Record<string, any>;
+}
+
 // 池子接口
 export interface Pool {
   address: string;
@@ -143,6 +156,21 @@ export interface Pool {
   volumeChange: number;
   risk: 'low' | 'medium' | 'high';
   recommended: boolean;
+}
+
+// 池子更新接口
+export interface PoolUpdate {
+  poolAddress: string;
+  timestamp: string;
+  tvl: number;
+  apr: number;
+  volume24h: number;
+  volumeChange: number;
+  price0: number;
+  price1: number;
+  priceChange0: number;
+  priceChange1: number;
+  metadata?: Record<string, any>;
 }
 
 // 交易类型
@@ -189,6 +217,19 @@ export interface MarketData {
   volumeChange: number;
   meteoraVolume: number;
   meteoraVolumeChange: number;
+}
+
+// 市场更新接口
+export interface MarketUpdate {
+  symbol: string;
+  timestamp: string;
+  price: number;
+  priceChange: number;
+  volume24h: number;
+  volumeChange: number;
+  high24h: number;
+  low24h: number;
+  metadata?: Record<string, any>;
 }
 
 // 不需要重复导出，因为上面已经使用export声明了

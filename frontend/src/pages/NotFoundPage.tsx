@@ -10,6 +10,7 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import { FiHome } from 'react-icons/fi';
+import { ButtonIcon } from '../components/IconWrapper';
 
 const NotFoundPage: React.FC = () => {
   const bgColor = useColorModeValue('gray.50', 'gray.900');
@@ -46,7 +47,7 @@ const NotFoundPage: React.FC = () => {
         <Button
           as={RouterLink}
           to="/dashboard"
-          leftIcon={<FiHome />}
+          leftIcon={<ButtonIcon icon={FiHome} />}
           colorScheme="primary"
           size="lg"
           mt={4}

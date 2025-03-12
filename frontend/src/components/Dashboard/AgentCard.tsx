@@ -12,6 +12,7 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import { FiPlay, FiPause } from 'react-icons/fi';
+import { ButtonIcon } from '../IconWrapper';
 
 interface AgentCardProps {
   id: string;
@@ -74,10 +75,23 @@ const AgentCard: React.FC<AgentCardProps> = ({
       </SimpleGrid>
       
       <Flex justifyContent="space-between">
-        <Button 
-          size="sm" 
-          leftIcon={status === 'running' ? <FiPause /> : <FiPlay />} 
+        <Button
+          size="sm"
+          colorScheme={status === 'running' ? 'red' : 'green'}
           variant="outline"
+          leftIcon={
+            status === 'running' ? (
+              <ButtonIcon icon={FiPause} />
+            ) : (
+              <ButtonIcon icon={FiPlay} />
+            )
+          }
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // 这里应该调用启动/暂停Agent的API
+            console.log(`${status === 'running' ? '暂停' : '启动'} Agent ${id}`);
+          }}
         >
           {status === 'running' ? '暂停' : '启动'}
         </Button>

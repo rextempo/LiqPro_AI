@@ -4,7 +4,7 @@
  */
 
 import { WS_BASE_URL, WS_CONFIG } from '../config';
-import { WebSocketMessage, WebSocketSubscriptionOptions } from '../types';
+import { WebSocketMessage, WebSocketSubscriptionOptions, Signal, AgentUpdate, PoolUpdate, MarketUpdate } from '../types';
 
 // 事件类型
 export enum WebSocketEventType {
@@ -52,6 +52,27 @@ export class WebSocketClient {
 
   constructor(url: string = WS_BASE_URL) {
     this.url = url;
+  }
+
+  /**
+   * 添加连接成功事件监听器
+   */
+  public onOpen(listener: EventListener): void {
+    this.addEventListener(WebSocketEventType.CONNECT, listener);
+  }
+
+  /**
+   * 添加连接关闭事件监听器
+   */
+  public onClose(listener: EventListener): void {
+    this.addEventListener(WebSocketEventType.DISCONNECT, listener);
+  }
+
+  /**
+   * 添加错误事件监听器
+   */
+  public onError(listener: EventListener): void {
+    this.addEventListener(WebSocketEventType.ERROR, listener);
   }
 
   /**
@@ -254,6 +275,109 @@ export class WebSocketClient {
         data: event.data,
       });
     }
+  }
+
+  /**
+   * 订阅信号
+   */
+  public subscribeToSignals(options?: any): string {
+    return this.subscribe({
+      topic: 'signals',
+      options,
+    });
+  }
+
+  /**
+   * 取消订阅信号
+   */
+  public unsubscribeFromSignals(subscriptionId: string): boolean {
+    return this.unsubscribe(subscriptionId);
+  }
+
+  /**
+   * 添加信号事件监听器
+   */
+  public onSignal(subscriptionId: string, listener: (signal: Signal) => void): boolean {
+    return this.on(subscriptionId, 'signal', listener);
+  }
+
+  /**
+   * 添加信号过期事件监听器
+   */
+  public onSignalExpired(subscriptionId: string, listener: (signalId: string) => void): boolean {
+    return this.on(subscriptionId, 'signal_expired', listener);
+  }
+
+  /**
+   * 订阅Agent更新
+   */
+  public subscribeToAgentUpdates(agentId: string): string {
+    return this.subscribe({
+      topic: 'agent_updates',
+      options: { agentId },
+    });
+  }
+
+  /**
+   * 取消订阅Agent更新
+   */
+  public unsubscribeFromAgentUpdates(subscriptionId: string): boolean {
+    return this.unsubscribe(subscriptionId);
+  }
+
+  /**
+   * 添加Agent更新事件监听器
+   */
+  public onAgentUpdate(subscriptionId: string, listener: (update: AgentUpdate) => void): boolean {
+    return this.on(subscriptionId, 'agent_update', listener);
+  }
+
+  /**
+   * 订阅池更新
+   */
+  public subscribeToPoolUpdates(poolAddress: string): string {
+    return this.subscribe({
+      topic: 'pool_updates',
+      options: { poolAddress },
+    });
+  }
+
+  /**
+   * 取消订阅池更新
+   */
+  public unsubscribeFromPoolUpdates(subscriptionId: string): boolean {
+    return this.unsubscribe(subscriptionId);
+  }
+
+  /**
+   * 添加池更新事件监听器
+   */
+  public onPoolUpdate(subscriptionId: string, listener: (update: PoolUpdate) => void): boolean {
+    return this.on(subscriptionId, 'pool_update', listener);
+  }
+
+  /**
+   * 订阅市场更新
+   */
+  public subscribeToMarketUpdates(symbols?: string[]): string {
+    return this.subscribe({
+      topic: 'market_updates',
+      options: { symbols },
+    });
+  }
+
+  /**
+   * 取消订阅市场更新
+   */
+  public unsubscribeFromMarketUpdates(subscriptionId: string): boolean {
+    return this.unsubscribe(subscriptionId);
+  }
+
+  /**
+   * 添加市场更新事件监听器
+   */
+  public onMarketUpdate(subscriptionId: string, listener: (update: MarketUpdate) => void): boolean {
+    return this.on(subscriptionId, 'market_update', listener);
   }
 
   /**

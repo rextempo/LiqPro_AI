@@ -9,7 +9,8 @@ import {
   Text,
   useColorModeValue,
 } from '@chakra-ui/react';
-import { FiPlay, FiPause, FiAlertTriangle } from 'react-icons/fi';
+import { FiPause, FiPlay, FiAlertTriangle } from 'react-icons/fi';
+import { ButtonIcon } from '../IconWrapper';
 
 interface AgentHeaderProps {
   name: string;
@@ -69,7 +70,7 @@ const AgentHeader: React.FC<AgentHeaderProps> = ({
         <HStack spacing={3}>
           {status === 'running' ? (
             <Button
-              leftIcon={<FiPause />}
+              leftIcon={<ButtonIcon icon={FiPause} />}
               colorScheme="gray"
               variant="outline"
               onClick={onPause}
@@ -78,7 +79,7 @@ const AgentHeader: React.FC<AgentHeaderProps> = ({
             </Button>
           ) : (
             <Button
-              leftIcon={<FiPlay />}
+              leftIcon={<ButtonIcon icon={FiPlay} />}
               colorScheme="primary"
               onClick={onResume}
             >
@@ -86,7 +87,7 @@ const AgentHeader: React.FC<AgentHeaderProps> = ({
             </Button>
           )}
           <Button
-            leftIcon={<FiAlertTriangle />}
+            leftIcon={<ButtonIcon icon={FiAlertTriangle} />}
             colorScheme="danger"
             variant="solid"
             onClick={onEmergencyExit}
