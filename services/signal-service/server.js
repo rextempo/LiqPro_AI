@@ -17,7 +17,7 @@ const signals = new Map();
 const RABBITMQ_HOST = process.env.RABBITMQ_HOST || 'rabbitmq';
 const RABBITMQ_PORT = process.env.RABBITMQ_PORT || '5672';
 const RABBITMQ_USER = process.env.RABBITMQ_USER || 'liqpro';
-const RABBITMQ_PASS = process.env.RABBITMQ_PASS || 'liqpro';
+const RABBITMQ_PASS = process.env.RABBITMQ_PASS || 'liqpro_password';
 
 // 队列名称
 const POOL_DATA_QUEUE = 'pool_data_queue';
@@ -76,130 +76,169 @@ function mapToScore(value, minValue, maxValue, minScore, maxScore) {
 
 // 评分系统函数
 function calculateBasePerformanceScore(pool) {
-  // 交易量评分 (40%) - 大幅扩展范围
-  const volumeScore = mapToScore(
-    pool.volume24h || 0,
-    10000,     // 降低最小有意义交易量到1万
-    100000000, // 保持最高交易量在1亿
-    0,         // 最低分
-    100        // 最高分
-  );
-  
-  // 24h收益率评分 (35%) - 扩大收益率范围
-  const yieldScore = (pool.yield24h || 0) <= 0 
-    ? 0 
-    : mapToScore(
-        pool.yield24h,
-        0.0001,  // 降低最小有意义收益率到0.01%
-        0.01,    // 提高理想收益率到1%
-        0,       // 最低分
-        100      // 最高分
-      );
-  
-  // 流动性评分 (20%) - 扩大流动性范围
+  // 流动性评分 (35%) - 优化范围和权重
   const liquidityScore = mapToScore(
     pool.liquidity || 0,
-    100000,    // 降低最小有意义流动性到10万
-    50000000,  // 保持最高流动性在5000万
+    50000,     // 最小有效流动性降低到5万
+    100000000, // 最高流动性提升到1亿
     0,         // 最低分
     100        // 最高分
   );
   
-  // 费用总量评分 (5%) - 扩大费用范围
+  // 交易量评分 (35%) - 优化范围
+  const volumeScore = mapToScore(
+    pool.volume24h || 0,
+    5000,      // 最小有效交易量降低到5千
+    50000000,  // 最高交易量调整到5千万
+    0,         // 最低分
+    100        // 最高分
+  );
+  
+  // 费用收益评分 (30%) - 提高权重
   const feesScore = mapToScore(
     pool.fees24h || 0,
-    100,      // 降低最小有意义费用到100
-    100000,   // 保持最高费用在10万
+    50,       // 最小有效费用降低到50
+    200000,   // 最高费用提升到20万
     0,        // 最低分
     100       // 最高分
   );
   
   // 计算加权总分
   const weightedScore = 
-    volumeScore * 0.4 +
-    yieldScore * 0.35 +
-    liquidityScore * 0.2 +
-    feesScore * 0.05;
+    liquidityScore * 0.35 +
+    volumeScore * 0.35 +
+    feesScore * 0.30;
   
   return {
-    volumeScore,
-    yieldScore,
     liquidityScore,
+    volumeScore,
     feesScore,
-    finalScore: weightedScore
+    finalScore: weightedScore,
+    details: {
+      liquidity: pool.liquidity || 0,
+      volume24h: pool.volume24h || 0,
+      fees24h: pool.fees24h || 0
+    }
   };
 }
 
-function calculateStabilityScore(pool, historicalData) {
-  // 如果没有历史数据，返回默认分数
-  if (!historicalData || historicalData.length < 5) {
-    return {
-      priceVolatility: null,
-      yieldStability: null,
-      volumeConsistency: null,
-      liquidityStability: null,
-      stabilityScore: 60
-    };
-  }
+function calculateStabilityScore(pool) {
+  // 基于当前数据计算保守的稳定性评分
+  const baseScore = calculateBasePerformanceScore(pool).finalScore;
+  const conservativeScore = Math.min(70, baseScore * 0.7);  // 最高保守分数为70
   
-  // 计算价格波动率 (40%)
-  const priceVolatility = pool.priceChange24h ? Math.abs(pool.priceChange24h) : 0.05;
-  const priceVolatilityScore = mapToScore(priceVolatility, 0.5, 0, 0, 100);
+  // 计算简单的价格稳定性 (基于当前价格变化)
+  const priceVolatility = pool.priceChange24h ? Math.min(100, 100 - Math.abs(pool.priceChange24h) * 100) : 50;
   
-  // 计算收益稳定性 (30%)
-  const yieldStabilityScore = pool.yield24h ? mapToScore(Math.abs(pool.yield24h), 0.05, 0, 100, 0) : 60;
+  // 计算简单的收益稳定性 (基于当前APR)
+  const yieldStability = pool.apr ? Math.min(100, 100 - (pool.apr > 100 ? 50 : 0)) : 50;
   
-  // 计算交易量一致性 (20%) - 扩大范围
-  const volumeConsistencyScore = pool.volume24h ? mapToScore(pool.volume24h, 10000, 100000000, 0, 100) : 60;
+  // 计算简单的交易量一致性 (基于当前交易量)
+  const volumeConsistency = pool.volume24h ? Math.min(100, pool.volume24h > 10000 ? 80 : 50) : 40;
   
-  // 计算流动性稳定性 (10%) - 扩大范围
-  const liquidityStabilityScore = pool.liquidity ? mapToScore(pool.liquidity, 100000, 50000000, 0, 100) : 60;
+  // 计算简单的流动性稳定性 (基于当前流动性)
+  const liquidityStability = pool.liquidity ? Math.min(100, pool.liquidity > 50000 ? 80 : 50) : 40;
   
   // 计算加权总分
-  const stabilityScore = 
-    priceVolatilityScore * 0.4 +
-    yieldStabilityScore * 0.3 +
-    volumeConsistencyScore * 0.2 +
-    liquidityStabilityScore * 0.1;
+  const stabilityScore = (
+    priceVolatility * 0.4 +
+    yieldStability * 0.3 +
+    volumeConsistency * 0.2 +
+    liquidityStability * 0.1
+  );
   
   return {
     priceVolatility,
-    yieldStability: pool.yield24h || 0,
-    volumeConsistency: pool.volume24h || 0,
-    liquidityStability: pool.liquidity || 0,
-    stabilityScore
+    yieldStability,
+    volumeConsistency,
+    liquidityStability,
+    stabilityScore,
+    dataCompleteness: 1  // 由于使用当前数据，完整性设为1
   };
 }
 
 function calculateRiskScore(pool) {
-  // 价格风险 (40%)
+  // 基础风险评估
+  const baseRisk = calculateBaseRiskScore(pool);
+  
+  // 计算高级风险指标
+  const advancedRisk = {
+    // 价格趋势风险 (基于24小时价格变化)
+    priceTrendRisk: pool.priceChange24h ? Math.min(100, Math.abs(pool.priceChange24h) * 200) : 50,
+    
+    // 流动性集中度风险 (基于当前流动性)
+    liquidityConcentrationRisk: pool.liquidity ? Math.max(0, 100 - (pool.liquidity / 100000)) : 70,
+    
+    // 交易对相关性风险 (使用保守估计)
+    correlationRisk: 50,
+    
+    // 计算高级风险评分
+    advancedRiskScore: 0  // 将在下面计算
+  };
+  
+  // 计算高级风险评分
+  advancedRisk.advancedRiskScore = (
+    advancedRisk.priceTrendRisk * 0.4 +
+    advancedRisk.liquidityConcentrationRisk * 0.3 +
+    advancedRisk.correlationRisk * 0.3
+  );
+  
+  // 综合评分 (60% 基础风险 + 40% 高级风险)
+  return {
+    ...baseRisk,
+    ...advancedRisk,
+    finalRiskScore: baseRisk.baseRiskScore * 0.6 + advancedRisk.advancedRiskScore * 0.4
+  };
+}
+
+// 新增：计算波动性评分
+function calculateVolatilityScore(values) {
+  const volatility = calculateCoefficientOfVariation(values);
+  return mapToScore(volatility, 0.5, 0, 0, 100);  // 波动性越低分数越高
+}
+
+// 新增：计算收益稳定性评分
+function calculateYieldStabilityScore(historicalData) {
+  const yields = historicalData.map(d => d.yield24h || 0);
+  const yieldVolatility = calculateCoefficientOfVariation(yields);
+  return mapToScore(yieldVolatility, 0.3, 0, 0, 100);  // 收益波动性越低分数越高
+}
+
+// 新增：计算一致性评分
+function calculateConsistencyScore(values) {
+  const changeRate = calculateDailyChangeRate(values);
+  return mapToScore(changeRate, 0.3, 0, 0, 100);  // 变化率越低分数越高
+}
+
+// 新增：计算基础风险评分
+function calculateBaseRiskScore(pool) {
+  // 价格风险 (35%)
   const priceRisk = pool.priceChange24h ? Math.abs(pool.priceChange24h) * 50 : 50;
   
-  // 流动性风险 (30%) - 扩大范围
-  const liquidityRisk = pool.liquidity ? mapToScore(pool.liquidity, 100000, 50000000, 100, 0) : 50;
+  // 流动性风险 (35%)
+  const liquidityRisk = pool.liquidity ? mapToScore(pool.liquidity, 50000, 100000000, 100, 0) : 70;
   
-  // 池子年龄风险 (30%) - 对于高交易量池子，可以稍微放宽年龄要求
+  // 池子年龄风险 (30%)
   const ageRisk = pool.creationTime 
     ? mapToScore(
         (Date.now() - new Date(pool.creationTime).getTime()) / (1000 * 60 * 60 * 24),
-        2,     // 降低最小天数要求
-        10,    // 降低理想天数要求
+        1,     // 最小天数要求降低到1天
+        14,    // 理想天数要求调整到14天
         100,   // 新池子高风险
-        30     // 老池子低风险
+        20     // 老池子低风险
       )
-    : 50;
+    : 80;
   
-  // 计算加权总风险分数
-  const riskScore = 
-    priceRisk * 0.4 +
-    liquidityRisk * 0.3 +
-    ageRisk * 0.3;
+  const baseRiskScore = 
+    priceRisk * 0.35 +
+    liquidityRisk * 0.35 +
+    ageRisk * 0.30;
   
   return {
     priceRisk,
     liquidityRisk,
     ageRisk,
-    riskScore
+    baseRiskScore
   };
 }
 
@@ -295,14 +334,29 @@ const publishSignal = async (signal) => {
  */
 const processPoolData = async (poolData) => {
   try {
-    // 检查是否是数组格式的池数据
-    if (Array.isArray(poolData)) {
+    // 检查消息格式
+    if (poolData.type === 'pool_data' && Array.isArray(poolData.data)) {
+      // 使用data字段中的池数据
+      const pools = poolData.data;
+      
+      console.log(`收到数组格式的池数据，包含 ${pools.length} 个池`);
+      
+      // 处理所有池数据并生成分级信号
+      await generateTieredSignals(pools);
+    } else if (poolData.type === 'pool_data' && poolData.data) {
+      // 如果data不是数组但存在，则视为单个池数据
+      console.log(`收到单个池数据对象: ${poolData.data.id || poolData.data.address || 'unknown'}`);
+      
+      // 创建一个只包含这个池的数组
+      await generateTieredSignals([poolData.data]);
+    } else if (Array.isArray(poolData)) {
+      // 兼容直接发送数组格式的情况
       console.log(`收到数组格式的池数据，包含 ${poolData.length} 个池`);
       
       // 处理所有池数据并生成分级信号
       await generateTieredSignals(poolData);
     } else {
-      // 如果是单个池数据，收集到一个临时数组中
+      // 兼容直接发送单个池数据的情况
       console.log(`收到单个池数据: ${poolData.id || poolData.address || 'unknown'}`);
       
       // 创建一个只包含这个池的数组
@@ -334,17 +388,17 @@ const generateTieredSignals = async (poolsData) => {
         // 计算性能评分
         const performanceScore = calculateBasePerformanceScore(pool);
         
-        // 计算稳定性评分
+        // 计算稳定性评分 (不再需要历史数据)
         const stabilityScore = calculateStabilityScore(pool);
         
-        // 计算风险评分
+        // 计算风险评分 (不再需要历史数据)
         const riskScore = calculateRiskScore(pool);
         
         // 计算最终评分 (40% 性能 + 40% 稳定性 + 20% 风险)
         const finalScore = (
           performanceScore.finalScore * 0.4 + 
           stabilityScore.stabilityScore * 0.4 + 
-          (100 - riskScore.riskScore) * 0.2
+          (100 - riskScore.finalRiskScore) * 0.2
         );
         
         // 添加到池数组
@@ -524,14 +578,14 @@ const formatPoolData = (poolData, tier) => {
     risk_metrics: {
       price_risk: riskScore.priceRisk,
       liquidity_risk: riskScore.liquidityRisk,
-      overall_risk: riskScore.riskScore
+      overall_risk: riskScore.finalRiskScore
     },
     scores: {
       base_performance_score: performanceScore.finalScore,
       liquidity_distribution_score: performanceScore.liquidityScore * 100,
       fee_efficiency_score: performanceScore.feesScore,
       stability_score: stabilityScore.stabilityScore,
-      risk_score: riskScore.riskScore,
+      risk_score: riskScore.finalRiskScore,
       final_score: finalScore
     },
     recommendation: {
