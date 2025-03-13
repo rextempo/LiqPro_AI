@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  # 前端应用
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_API_URL=https://api.liqpro.com
+      - REACT_APP_WS_URL=wss://api.liqpro.com/ws
+    networks:
+      - liqpro-network
+
+  # API服务
+  api-service:
+    build:
+      context: ./services/api-service
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./services/api-service/.env.production
+    networks:
+      - liqpro-network
+    depends_on:
+      - mongodb
+      - rabbitmq
+
+  # 数据服务
+  data-service:
+    build:
+      context: ./services/data-service
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./services/data-service/.env.production
+    networks:
+      - liqpro-network
+    depends_on:
+      - mongodb
+
+  # 信号服务
+  signal-service:
+    build:
+      context: ./services/signal-service
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./services/signal-service/.env.production
+    networks:
+      - liqpro-network
+    depends_on:
+      - mongodb
+      - rabbitmq
+
+  # 评分服务
+  scoring-service:
+    build:
+      context: ./services/scoring-service
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./services/scoring-service/.env.production
+    networks:
+      - liqpro-network
+    depends_on:
+      - mongodb
+      - rabbitmq
+
+  # Agent引擎
+  agent-engine:
+    build:
+      context: ./services/agent-engine
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ./services/agent-engine/.env.production
+    networks:
+      - liqpro-network
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - data-service
+      - signal-service
+      - scoring-service
+
+  # MongoDB数据库
+  mongodb:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - liqpro-network
+
+  # RabbitMQ消息队列
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=liqpro
+      - RABBITMQ_DEFAULT_PASS=liqpro_password
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - liqpro-network
+
+networks:
+  liqpro-network:
+    driver: bridge
+
+volumes:
+  mongodb-data:
+  rabbitmq-data: 

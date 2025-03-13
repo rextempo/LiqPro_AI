@@ -1,0 +1,14 @@
+{
+  "name": "signal-service",
+  "version": "1.0.0",
+  "description": "LiqPro Signal Service",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.3",
+    "express": "^4.18.2",
+    "uuid": "^9.0.1"
+  }
+} 

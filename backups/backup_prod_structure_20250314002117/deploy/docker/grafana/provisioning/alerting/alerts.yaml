@@ -1,0 +1,162 @@
+apiVersion: 1
+
+groups:
+  - name: LiqPro Alerts
+    folder: LiqPro
+    interval: 1m
+    rules:
+      - name: Service Down
+        condition: B
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: up == 0
+              instant: true
+              intervalMs: 15000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              refId: B
+              type: classic_conditions
+        noDataState: OK
+        execErrState: Error
+        for: 1m
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "Service {{ $labels.job }} has been down for more than 1 minute."
+        labels:
+          severity: critical
+          category: availability
+
+      - name: High Error Rate
+        condition: B
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: sum(rate(http_requests_total{status_code=~"5.."}[5m])) by (job) / sum(rate(http_requests_total[5m])) by (job) > 0.05
+              instant: false
+              intervalMs: 15000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              refId: B
+              type: classic_conditions
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "High error rate for {{ $labels.job }}"
+          description: "Service {{ $labels.job }} has a high error rate (>5%) for more than 5 minutes."
+        labels:
+          severity: warning
+          category: errors
+
+      - name: Slow Response Time
+        condition: B
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (job, le)) > 1
+              instant: false
+              intervalMs: 15000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              refId: B
+              type: classic_conditions
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "Slow response time for {{ $labels.job }}"
+          description: "Service {{ $labels.job }} has a 95th percentile response time > 1s for more than 5 minutes."
+        labels:
+          severity: warning
+          category: performance
+
+      - name: RabbitMQ Connection Lost
+        condition: B
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: mq_connection_status == 0
+              instant: true
+              intervalMs: 15000
+              maxDataPoints: 43200
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              refId: B
+              type: classic_conditions
+        noDataState: OK
+        execErrState: Error
+        for: 1m
+        annotations:
+          summary: "RabbitMQ connection lost for {{ $labels.job }}"
+          description: "Service {{ $labels.job }} has lost connection to RabbitMQ for more than 1 minute."
+        labels:
+          severity: critical
+          category: connectivity 

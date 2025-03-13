@@ -1,0 +1,210 @@
+version: '3.8'
+
+services:
+  # 前端应用
+  frontend:
+    image: node:18
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../frontend:/app
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_API_URL=http://localhost:3001
+      - REACT_APP_WS_URL=ws://localhost:3001/ws
+    networks:
+      - liqpro-network
+    command: >
+      sh -c "npm install --include=dev && npm run start"
+    restart: unless-stopped
+
+  # API服务
+  api-service:
+    image: node:18
+    working_dir: /app/api-service
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./api-service:/app/api-service
+      - ../libs:/app/libs
+    environment:
+      - NODE_ENV=production
+      - SIGNAL_SERVICE_URL=http://signal-service:3000
+      - DATA_SERVICE_URL=http://data-service:3000
+      - SCORING_SERVICE_URL=http://scoring-service:3000
+      - AGENT_SERVICE_URL=http://agent-engine:3000
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - MONGODB_URI=mongodb://mongodb:27017/liqpro
+    networks:
+      - liqpro-network
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - signal-service
+      - data-service
+      - scoring-service
+      - agent-engine
+    command: >
+      sh -c "cd /app/libs/common && npm install && npm run build && 
+             cd /app/api-service && npm install && npm start"
+    restart: unless-stopped
+
+  # 数据服务
+  data-service:
+    image: node:18
+    working_dir: /app/data-service
+    ports:
+      - "3002:3000"
+    volumes:
+      - ./data-service:/app/data-service
+    environment:
+      - PORT=3000
+      - DATA_COLLECTION_INTERVAL=300000
+      - MONGO_URI=mongodb://mongodb:27017/liqpro
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=liqpro
+      - RABBITMQ_PASS=liqpro
+      - SOLANA_RPC_ENDPOINT=https://api.mainnet-beta.solana.com
+      - LOG_LEVEL=info
+    networks:
+      - liqpro-network
+    depends_on:
+      - mongodb
+      - rabbitmq
+    command: >
+      sh -c "npm install && node server.js"
+    restart: unless-stopped
+
+  # 信号服务
+  signal-service:
+    image: node:18
+    working_dir: /app/signal-service
+    ports:
+      - "3003:3000"
+    volumes:
+      - ./signal-service:/app/signal-service
+    environment:
+      - PORT=3000
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=liqpro
+      - RABBITMQ_PASS=liqpro
+    networks:
+      - liqpro-network
+    depends_on:
+      - rabbitmq
+    command: >
+      sh -c "npm install && node server.js"
+    restart: unless-stopped
+
+  # 评分服务
+  scoring-service:
+    image: node:18
+    working_dir: /app/scoring-service
+    ports:
+      - "3004:3000"
+    volumes:
+      - ./scoring-service:/app/scoring-service
+      - ../libs:/app/libs
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/liqpro
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+    networks:
+      - liqpro-network
+    depends_on:
+      - mongodb
+      - rabbitmq
+    command: >
+      sh -c "cd /app/libs/common && npm install && npm run build && 
+             cd /app/scoring-service && npm install && npm start"
+    restart: unless-stopped
+
+  # Agent引擎
+  agent-engine:
+    image: node:18
+    working_dir: /app/agent-engine
+    ports:
+      - "3005:3000"
+    volumes:
+      - ./agent-engine:/app/agent-engine
+      - ../libs:/app/libs
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/liqpro
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - SIGNAL_SERVICE_URL=http://signal-service:3000
+      - DATA_SERVICE_URL=http://data-service:3000
+      - SCORING_SERVICE_URL=http://scoring-service:3000
+    networks:
+      - liqpro-network
+    depends_on:
+      - mongodb
+      - rabbitmq
+      - data-service
+      - signal-service
+      - scoring-service
+    command: >
+      sh -c "cd /app/libs/common && npm install && npm run build && 
+             cd /app/agent-engine && npm install && npm start"
+    restart: unless-stopped
+
+  # Solana缓存服务
+  solana-cache:
+    image: node:18
+    working_dir: /app/solana-cache
+    ports:
+      - "3006:3000"
+    volumes:
+      - ./solana-cache:/app/solana-cache
+    environment:
+      - PORT=3000
+      - SOLANA_RPC_ENDPOINT=https://api.mainnet-beta.solana.com
+      - CACHE_REFRESH_INTERVAL=60000
+      - MONGODB_URI=mongodb://mongodb:27017/liqpro
+    networks:
+      - liqpro-network
+    depends_on:
+      - mongodb
+    command: >
+      sh -c "npm install && npm start"
+    restart: unless-stopped
+
+  # MongoDB数据库
+  mongodb:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - liqpro-network
+    restart: unless-stopped
+
+  # RabbitMQ消息队列
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=liqpro
+      - RABBITMQ_DEFAULT_PASS=liqpro_password
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - liqpro-network
+    restart: unless-stopped
+
+networks:
+  liqpro-network:
+    driver: bridge
+
+volumes:
+  mongodb-data:
+  rabbitmq-data:

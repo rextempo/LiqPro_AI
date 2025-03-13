@@ -55,6 +55,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // 检查认证状态
   const checkAuthStatus = async (): Promise<boolean> => {
+    // 本地测试环境自动认证
+    if (process.env.NODE_ENV === 'development') {
+      console.log('本地测试环境：自动认证用户');
+      
+      // 设置默认用户信息
+      setUser({
+        id: 'test-user-id',
+        walletAddress: 'test-wallet-address',
+        username: '测试用户',
+        email: 'test@example.com',
+        role: 'user',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        preferences: {
+          theme: 'light',
+          notifications: true,
+          language: 'zh-CN'
+        }
+      });
+      
+      return true;
+    }
+    
+    // 正常认证流程（生产环境）
     // 初始化认证客户端
     const isInitialized = authClient.initAuth();
     

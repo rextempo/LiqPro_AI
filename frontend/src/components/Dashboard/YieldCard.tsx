@@ -5,6 +5,7 @@ import {
   Flex,
   HStack,
   Text,
+  Stat,
   StatLabel,
   StatNumber,
   useColorModeValue,
@@ -33,38 +34,40 @@ const YieldCard: React.FC<YieldCardProps> = ({
       borderWidth="1px" 
       borderColor={borderColor}
     >
-      <StatLabel fontSize="sm" color="gray.500">收益率</StatLabel>
-      <Flex justifyContent="space-between" alignItems="center">
-        <StatNumber fontSize="2xl" color={yieldPercent >= 0 ? 'success.500' : 'danger.500'}>
-          {yieldPercent >= 0 ? '+' : ''}{yieldPercent}%
-        </StatNumber>
-        <HStack>
-          <Button 
-            size="xs" 
-            variant={timeRange === '24h' ? 'solid' : 'outline'} 
-            colorScheme="primary" 
-            onClick={() => onTimeRangeChange('24h')}
-          >
-            24h
-          </Button>
-          <Button 
-            size="xs" 
-            variant={timeRange === '7d' ? 'solid' : 'outline'} 
-            colorScheme="primary" 
-            onClick={() => onTimeRangeChange('7d')}
-          >
-            7d
-          </Button>
-          <Button 
-            size="xs" 
-            variant={timeRange === '30d' ? 'solid' : 'outline'} 
-            colorScheme="primary" 
-            onClick={() => onTimeRangeChange('30d')}
-          >
-            30d
-          </Button>
-        </HStack>
-      </Flex>
+      <Stat>
+        <StatLabel fontSize="sm" color="gray.500">收益率</StatLabel>
+        <Flex justifyContent="space-between" alignItems="center">
+          <StatNumber fontSize="2xl" color={yieldPercent >= 0 ? 'success.500' : 'danger.500'}>
+            {yieldPercent >= 0 ? '+' : ''}{yieldPercent}%
+          </StatNumber>
+          <HStack>
+            <Button 
+              size="xs" 
+              variant={timeRange === '24h' ? 'solid' : 'outline'} 
+              colorScheme="primary" 
+              onClick={() => onTimeRangeChange('24h')}
+            >
+              24h
+            </Button>
+            <Button 
+              size="xs" 
+              variant={timeRange === '7d' ? 'solid' : 'outline'} 
+              colorScheme="primary" 
+              onClick={() => onTimeRangeChange('7d')}
+            >
+              7d
+            </Button>
+            <Button 
+              size="xs" 
+              variant={timeRange === '30d' ? 'solid' : 'outline'} 
+              colorScheme="primary" 
+              onClick={() => onTimeRangeChange('30d')}
+            >
+              30d
+            </Button>
+          </HStack>
+        </Flex>
+      </Stat>
       <Text fontSize="sm" color="gray.500" mt={2}>
         {timeRange === '24h' ? '过去24小时' : timeRange === '7d' ? '过去7天' : '过去30天'}收益率
       </Text>

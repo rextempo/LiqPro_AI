@@ -3,6 +3,7 @@ import {
   Box,
   Flex,
   Text,
+  Stat,
   StatLabel,
   StatNumber,
   StatHelpText,
@@ -35,15 +36,17 @@ const AssetCard: React.FC<AssetCardProps> = ({
       borderWidth="1px" 
       borderColor={borderColor}
     >
-      <StatLabel fontSize="sm" color="gray.500">总资产</StatLabel>
-      <Flex justifyContent="space-between" alignItems="baseline">
-        <StatNumber fontSize="2xl">{solAmount.toFixed(3)} SOL</StatNumber>
-        <Text color="gray.500">${usdAmount.toFixed(2)}</Text>
-      </Flex>
-      <StatHelpText>
-        <StatArrow type={changeDirection} />
-        {changePercent}%
-      </StatHelpText>
+      <Stat>
+        <StatLabel fontSize="sm" color="gray.500">总资产</StatLabel>
+        <Flex justifyContent="space-between" alignItems="baseline">
+          <StatNumber fontSize="2xl">{solAmount.toFixed(3)} SOL</StatNumber>
+          <Text color="gray.500">${usdAmount.toFixed(2)}</Text>
+        </Flex>
+        <StatHelpText>
+          <StatArrow type={changeDirection} />
+          {changePercent}%
+        </StatHelpText>
+      </Stat>
     </Box>
   );
 };

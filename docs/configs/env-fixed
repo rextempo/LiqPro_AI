@@ -1,0 +1,7 @@
+PORT=3002
+MONGODB_URI=mongodb://mongodb:27017/liqpro
+RABBITMQ_HOST=rabbitmq
+RABBITMQ_PORT=5672
+RABBITMQ_USER=liqpro
+RABBITMQ_PASS=liqpro
+LOG_LEVEL=info 

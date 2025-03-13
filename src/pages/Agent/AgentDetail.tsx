@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { agentApi, Agent as ApiAgent } from '../../api';
+import config from '../../config/env';
 
-interface Agent {
-  id: string;
-  name: string;
-  status: 'active' | 'inactive' | 'error';
-  type: string;
-  description: string;
-  config: Record<string, any>;
-  createdAt: string;
-  lastActive: string;
-  metrics: {
+// Extended Agent interface with additional UI-specific properties
+interface Agent extends ApiAgent {
+  description?: string;
+  config?: Record<string, any>;
+  metrics?: {
     successRate: number;
     executionCount: number;
     averageResponseTime: number;
@@ -27,50 +24,18 @@ const AgentDetail: React.FC = () => {
     const fetchAgentDetail = async () => {
       try {
         setLoading(true);
-        // 实际项目中，这里应该是一个API调用
-        // const response = await fetch(`/api/agents/${id}`);
-        // const data = await response.json();
-        
-        // 模拟数据
-        const mockData: Agent = {
-          id: id || '1',
-          name: 'LP监控Agent',
-          status: 'active',
-          type: '监控',
-          description: '这是一个用于监控LP池状态的Agent，它会定期检查池的流动性、价格和交易量，并在异常情况下发出警报。',
-          config: {
-            interval: 5000,
-            threshold: 0.5,
-            alertEndpoints: ['email', 'slack'],
-            pools: ['SOL/USDC', 'ETH/USDC']
-          },
-          createdAt: '2025-03-01',
-          lastActive: '2025-03-12 14:30:00',
-          metrics: {
-            successRate: 98.5,
-            executionCount: 1452,
-            averageResponseTime: 245
-          }
-        };
-        
-        // 模拟网络延迟
-        setTimeout(() => {
-          setAgent(mockData);
-          setLoading(false);
-        }, 800);
+        // 使用真实API获取Agent详情
+        const data = await agentApi.getAgentById(id || '');
+        setAgent(data);
       } catch (err) {
-        setError('获取Agent详情失败');
-        setLoading(false);
         console.error('Error fetching agent details:', err);
+        setError('Failed to load agent details. Please try again later.');
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (id) {
-      fetchAgentDetail();
-    } else {
-      setError('Agent ID不存在');
-      setLoading(false);
-    }
+    fetchAgentDetail();
   }, [id]);
 
   const getStatusBadge = (status: Agent['status']) => {
@@ -167,13 +132,13 @@ const AgentDetail: React.FC = () => {
           <h3 className="text-lg font-medium text-gray-900 mb-2">性能指标</h3>
           <div className="space-y-2">
             <div>
-              <span className="text-gray-500">成功率:</span> {agent.metrics.successRate}%
+              <span className="text-gray-500">成功率:</span> {agent.metrics?.successRate}%
             </div>
             <div>
-              <span className="text-gray-500">执行次数:</span> {agent.metrics.executionCount}
+              <span className="text-gray-500">执行次数:</span> {agent.metrics?.executionCount}
             </div>
             <div>
-              <span className="text-gray-500">平均响应时间:</span> {agent.metrics.averageResponseTime}ms
+              <span className="text-gray-500">平均响应时间:</span> {agent.metrics?.averageResponseTime}ms
             </div>
           </div>
         </div>

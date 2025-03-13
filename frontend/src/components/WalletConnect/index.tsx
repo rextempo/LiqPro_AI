@@ -25,6 +25,13 @@ interface Wallet {
   connect: () => Promise<{ address: string; signature: string } | null>;
 }
 
+// 辅助函数：将Uint8Array转换为十六进制字符串
+const arrayToHex = (array: Uint8Array): string => {
+  return Array.from(array)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+};
+
 const WalletConnect: React.FC = () => {
   const { loginWithWallet } = useAuth();
   const toast = useToast();
@@ -101,7 +108,8 @@ const WalletConnect: React.FC = () => {
           try {
             const signatureData = await window.solana.signMessage(encodedMessage, 'utf8');
             console.log('[WalletConnect] Phantom钱包签名成功');
-            const signature = Buffer.from(signatureData.signature).toString('hex');
+            // 使用自定义函数将Uint8Array转换为十六进制字符串，而不是使用Buffer
+            const signature = arrayToHex(signatureData.signature);
             return { address, signature };
           } catch (signError) {
             console.error('[WalletConnect] Phantom钱包签名失败:', signError);
@@ -142,7 +150,8 @@ const WalletConnect: React.FC = () => {
 
           // 请求签名
           const signatureData = await window.solflare.signMessage(encodedMessage, 'utf8');
-          const signature = Buffer.from(signatureData.signature).toString('hex');
+          // 使用自定义函数将Uint8Array转换为十六进制字符串，而不是使用Buffer
+          const signature = arrayToHex(signatureData.signature);
 
           return { address, signature };
         } catch (error) {

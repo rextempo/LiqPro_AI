@@ -1,10 +1,4 @@
-// Define the ReportHandler type since we don't have @types/web-vitals
-type ReportHandler = (metric: {
-  id: string;
-  name: string;
-  value: number;
-  delta?: number;
-}) => void;
+import { ReportHandler } from 'web-vitals';
 
 const reportWebVitals = (onPerfEntry?: ReportHandler) => {
   if (onPerfEntry && onPerfEntry instanceof Function) {
@@ -14,10 +8,8 @@ const reportWebVitals = (onPerfEntry?: ReportHandler) => {
       getFCP(onPerfEntry);
       getLCP(onPerfEntry);
       getTTFB(onPerfEntry);
-    }).catch(error => {
-      console.error('Error loading web-vitals:', error);
     });
   }
 };
 
-export default reportWebVitals; 
+export default reportWebVitals;

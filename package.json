@@ -14,7 +14,12 @@
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
     "lint": "npm run lint --workspaces",
-    "format": "npm run format --workspaces"
+    "format": "npm run format --workspaces",
+    "start": "cd production && ./scripts/start.sh",
+    "stop": "cd production && ./scripts/stop.sh",
+    "monitor": "cd production && ./scripts/monitor.sh",
+    "backup": "cd production && ./scripts/backup.sh",
+    "cleanup": "scripts/maintenance/final-cleanup.sh"
   },
   "keywords": [
     "solana",
