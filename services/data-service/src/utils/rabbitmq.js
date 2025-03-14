@@ -5,7 +5,7 @@ const logger = require('./logger');
 const RABBITMQ_HOST = process.env.RABBITMQ_HOST || 'rabbitmq';
 const RABBITMQ_PORT = process.env.RABBITMQ_PORT || '5672';
 const RABBITMQ_USER = process.env.RABBITMQ_USER || 'liqpro';
-const RABBITMQ_PASS = process.env.RABBITMQ_PASS || 'liqpro';
+const RABBITMQ_PASS = process.env.RABBITMQ_PASS || 'liqpro_password';
 const RABBITMQ_URL = `amqp://${RABBITMQ_USER}:${RABBITMQ_PASS}@${RABBITMQ_HOST}:${RABBITMQ_PORT}`;
 
 // 队列名称

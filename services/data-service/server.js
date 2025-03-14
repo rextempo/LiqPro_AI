@@ -218,112 +218,190 @@ async function getHistoricalData(poolAddress, startTime, endTime) {
   }
 }
 
-// 收集并发布池数据
+/**
+ * 收集并发布池数据
+ */
 async function collectAndPublishPoolData() {
+  logger.info('开始收集并发布池数据');
+  
   try {
-    logger.info('开始收集高活跃度池数据');
+    // 使用curl方法获取所有池数据
+    logger.info('从Meteora获取所有池数据');
+    const allPools = await meteoraCollector.getAllPools();
     
-    // 添加重试逻辑
-    let retries = 0;
-    const maxRetries = 3;
-    let pools = null;
+    if (!allPools || allPools.length === 0) {
+      logger.error('未能获取到任何池数据');
+      return;
+    }
     
-    while (retries < maxRetries && (!pools || pools.length === 0)) {
-      try {
-        pools = await meteoraCollector.getHighActivityPools(100);
-        
-        if (!pools || pools.length === 0) {
-          logger.warn(`尝试 ${retries + 1}/${maxRetries}: 未找到高活跃度池数据`);
-          retries++;
-          
-          if (retries < maxRetries) {
-            // 指数退避重试
-            const delay = Math.pow(2, retries) * 1000;
-            logger.info(`等待 ${delay}ms 后重试...`);
-            await new Promise(resolve => setTimeout(resolve, delay));
+    logger.info(`成功获取${allPools.length}个池数据，开始筛选高活跃度池`);
+    
+    // 筛选TVL大于$10,000且24小时交易量大于$20,000的池
+    const filteredPools = allPools.filter(pool => {
+      // 解析TVL和交易量
+      const tvl = parseFloat(pool.liquidity || 0);
+      const volume24h = parseFloat(pool.volume_24h || pool.trade_volume_24h || pool.volume24h || 0);
+      
+      // 检查是否满足条件
+      return tvl >= 10000 && volume24h >= 20000;
+    });
+    
+    logger.info(`筛选出${filteredPools.length}个满足条件的池`);
+    
+    // 按24小时交易量排序
+    const sortedPools = filteredPools.sort((a, b) => {
+      const volumeA = parseFloat(a.volume_24h || a.trade_volume_24h || a.volume24h || 0);
+      const volumeB = parseFloat(b.volume_24h || b.trade_volume_24h || b.volume24h || 0);
+      return volumeB - volumeA;
+    });
+    
+    // 获取前100个高活跃度池
+    const topPools = sortedPools.slice(0, 100);
+    
+    logger.info(`选出前${topPools.length}个高活跃度池`);
+    
+    // 处理池数据，使用新的格式
+    const processedPools = meteoraCollector.processPoolData(topPools);
+    
+    // 准备MongoDB批量写入操作
+    const bulkOps = processedPools.map(pool => {
+      return {
+        insertOne: {
+          document: {
+            poolAddress: pool.address,
+            tokenA: pool.token_pair.token_x.symbol,
+            tokenB: pool.token_pair.token_y.symbol,
+            timestamp: new Date(),
+            liquidity: pool.tvl,
+            volume24h: pool.volume_24h,
+            fees24h: pool.fees_24h,
+            price: pool.current_price,
+            binStep: pool.fee_structure.bin_step,
+            feeTier: parseFloat(pool.fee_structure.base_fee),
+            apr: pool.apr,
+            tvl: pool.tvl,
+            metadata: {
+              fees: {
+                min_30: pool.fees_24h / 48, // 估算30分钟费用
+                hour_1: pool.fees_24h / 24, // 估算1小时费用
+                hour_2: pool.fees_24h / 12, // 估算2小时费用
+                hour_4: pool.fees_24h / 6,  // 估算4小时费用
+                hour_12: pool.fees_24h / 2, // 估算12小时费用
+                hour_24: pool.fees_24h      // 24小时费用
+              },
+              name: pool.name,
+              token_pair: pool.token_pair,
+              fee_structure: pool.fee_structure,
+              fee_to_tvl_ratio_24h: pool.fee_to_tvl_ratio_24h,
+              is_blacklisted: pool.is_blacklisted,
+              hide: pool.hide,
+              reserves: pool.reserves
+            }
           }
         }
-      } catch (error) {
-        logger.error(`尝试 ${retries + 1}/${maxRetries}: 获取池数据失败:`, error);
-        retries++;
-        
-        if (retries < maxRetries) {
-          // 指数退避重试
-          const delay = Math.pow(2, retries) * 1000;
-          logger.info(`等待 ${delay}ms 后重试...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
+      };
+    });
+    
+    // 执行MongoDB批量写入
+    if (bulkOps.length > 0) {
+      try {
+        const result = await PoolData.bulkWrite(bulkOps);
+        logger.info(`MongoDB批量写入成功: ${JSON.stringify(result.insertedCount || result)}`);
+      } catch (dbError) {
+        logger.error(`MongoDB批量写入失败: ${dbError.message}`);
+        if (dbError.stack) {
+          logger.error(dbError.stack);
         }
       }
     }
     
-    if (!pools || pools.length === 0) {
-      logger.error('在多次尝试后仍未找到高活跃度池数据');
+    // 发布到RabbitMQ
+    try {
+      // 使用rabbitmq工具类的publishPoolData方法发布消息
+      await rabbitmq.publishPoolData(processedPools);
+      
+      logger.info(`成功发布${processedPools.length}个高活跃度池数据到RabbitMQ`);
+    } catch (mqError) {
+      logger.error(`RabbitMQ发布失败: ${mqError.message}`);
+      if (mqError.stack) {
+        logger.error(mqError.stack);
+      }
+    }
+    
+    logger.info('池数据收集和发布完成');
+  } catch (error) {
+    logger.error(`池数据收集和发布过程中发生错误: ${error.message}`);
+    if (error.stack) {
+      logger.error(error.stack);
+    }
+  }
+}
+
+/**
+ * 筛选出前100个活跃池
+ * @param {Array} pools - 所有池数据
+ * @returns {Array} - 前100个活跃池
+ */
+function selectTop100ActivePools(pools) {
+  // 过滤掉黑名单和隐藏池子
+  const filteredPools = pools.filter(pool => {
+    return !pool.blacklisted && !pool.is_blacklisted && !pool.hidden && !pool.hide;
+  });
+  
+  // 过滤掉TVL小于10000美元和交易量小于20000美元的池子
+  const activePoolsWithHighTVL = filteredPools.filter(pool => {
+    // 解析数值，确保是数字类型
+    const parseNumericValue = (value) => {
+      if (value === null || value === undefined) return 0;
+      if (typeof value === 'number') return value;
+      if (typeof value === 'string') {
+        const parsed = parseFloat(value.replace(/[^0-9.eE-]/g, ''));
+        return isNaN(parsed) ? 0 : parsed;
+      }
+      return 0;
+    };
+    
+    const tvl = parseNumericValue(pool.liquidity) || parseNumericValue(pool.tvl) || 0;
+    const price = parseNumericValue(pool.price) || parseNumericValue(pool.currentPrice) || 1;
+    const tvlUsd = tvl * price;
+    
+    const volume24h = parseNumericValue(pool.volume24h) || parseNumericValue(pool.volume_24h) || parseNumericValue(pool.trade_volume_24h) || 0;
+    
+    return tvlUsd >= 10000 && volume24h >= 20000;
+  });
+  
+  // 按24小时交易量排序
+  const sortedPools = activePoolsWithHighTVL.sort((a, b) => {
+    const volumeA = parseFloat(a.volume24h || a.volume_24h || a.trade_volume_24h || 0);
+    const volumeB = parseFloat(b.volume24h || b.volume_24h || b.trade_volume_24h || 0);
+    return volumeB - volumeA;
+  });
+  
+  // 返回前100个池子
+  return sortedPools.slice(0, 100);
+}
+
+// 发布池数据到RabbitMQ
+async function publishPoolData(poolData) {
+  try {
+    if (!poolData || poolData.length === 0) {
+      logger.warn('没有池数据需要发布到RabbitMQ');
       return;
     }
     
-    logger.info(`成功收集 ${pools.length} 个高活跃度池数据`);
-    
-    // 记录一些样本数据，用于调试
-    if (pools.length > 0) {
-      const samplePool = pools[0];
-      logger.info('样本池数据:', {
-        address: samplePool.address,
-        tokenA: samplePool.tokenA,
-        tokenB: samplePool.tokenB,
-        liquidity: samplePool.liquidity,
-        volume24h: samplePool.volume24h
-      });
-    }
-    
-    // 保存到MongoDB
-    try {
-      // 批量操作，使用upsert确保不重复
-      const bulkOps = pools.map(pool => ({
-        updateOne: {
-          filter: { poolAddress: pool.address },
-          update: {
-            $set: {
-              poolAddress: pool.address,
-              tokenA: pool.tokenA,
-              tokenB: pool.tokenB,
-              tokenAAddress: pool.tokenAAddress,
-              tokenBAddress: pool.tokenBAddress,
-              timestamp: new Date(),
-              liquidity: pool.liquidity,
-              volume24h: pool.volume24h,
-              fees24h: pool.fees24h,
-              price: pool.price,
-              binStep: pool.binStep,
-              feeTier: pool.feeTier,
-              apr: pool.yields?.apr || pool.apr,
-              tvl: pool.liquidity,
-              metadata: {
-                reserves: pool.reserves,
-                fees: pool.fees,
-                yields: pool.yields,
-                name: pool.name
-              }
-            }
-          },
-          upsert: true
-        }
-      }));
-      
-      const result = await PoolData.bulkWrite(bulkOps);
-      logger.info(`成功保存 ${result.upsertedCount} 个新池数据，更新 ${result.modifiedCount} 个现有池数据`);
-    } catch (dbError) {
-      logger.error('保存池数据到MongoDB失败:', dbError);
-    }
-    
     // 发布到RabbitMQ
-    try {
-      await rabbitmq.publishToQueue('pool_data_queue', pools);
-      logger.info(`已发布 ${pools.length} 个池数据到RabbitMQ`);
-    } catch (mqError) {
-      logger.error('发布池数据到RabbitMQ失败:', mqError);
-    }
+    await rabbitmq.publishToExchange('pool_data', {
+      type: 'pool_data_update',
+      timestamp: new Date().toISOString(),
+      count: poolData.length,
+      data: poolData
+    });
+    
+    logger.info(`已发布${poolData.length}条池数据到RabbitMQ`);
+    return true;
   } catch (error) {
-    logger.error('收集和发布池数据失败:', error);
+    logger.error('发布池数据到RabbitMQ失败:', error);
+    throw error;
   }
 }
 
@@ -366,7 +444,19 @@ app.get('/health', (req, res) => {
 app.get('/api/pools', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit || '100', 10);
-    const pools = await meteoraCollector.getHighActivityPools(limit);
+    
+    // 获取所有池数据
+    const allPools = await meteoraCollector.getAllPools();
+    
+    // 筛选活跃池
+    const activePools = selectTop100ActivePools(allPools);
+    
+    // 处理池数据，使用新的格式
+    const processedPools = meteoraCollector.processPoolData(activePools);
+    
+    // 如果请求的限制小于活跃池数量，则只返回请求的数量
+    const pools = processedPools.slice(0, limit);
+    
     res.json({ success: true, data: pools });
   } catch (error) {
     logger.error('获取池数据失败:', error);
@@ -407,10 +497,65 @@ app.post('/api/collect', async (req, res) => {
 app.get('/api/pools/:address', async (req, res) => {
   try {
     const { address } = req.params;
-    const poolDetail = await meteoraCollector.getPoolDetail(address);
-    res.json({ success: true, data: poolDetail });
+    
+    // 首先尝试从链上获取池详情
+    try {
+      const chainPoolDetail = await meteoraCollector.getPoolDetailFromChain(address);
+      if (chainPoolDetail) {
+        // 将链上数据转换为新格式
+        const formattedPoolDetail = {
+          address: chainPoolDetail.address,
+          name: chainPoolDetail.name || `${chainPoolDetail.tokenA}-${chainPoolDetail.tokenB}`,
+          token_pair: {
+            token_x: {
+              address: chainPoolDetail.tokenAAddress,
+              symbol: chainPoolDetail.tokenA
+            },
+            token_y: {
+              address: chainPoolDetail.tokenBAddress,
+              symbol: chainPoolDetail.tokenB
+            }
+          },
+          tvl: chainPoolDetail.tvl || chainPoolDetail.liquidity,
+          volume_24h: chainPoolDetail.volume24h,
+          fees_24h: chainPoolDetail.fees24h,
+          current_price: chainPoolDetail.price,
+          apr: chainPoolDetail.apr,
+          fee_to_tvl_ratio_24h: chainPoolDetail.tvl > 0 ? chainPoolDetail.fees24h / chainPoolDetail.tvl : 0,
+          fee_structure: {
+            bin_step: chainPoolDetail.binStep,
+            base_fee: chainPoolDetail.feeTier.toString(),
+            max_fee: (chainPoolDetail.fees?.max || 0).toString(),
+            protocol_fee: "5"
+          },
+          is_blacklisted: false,
+          hide: false,
+          timestamp: chainPoolDetail.timestamp,
+          reserves: {
+            token_x: chainPoolDetail.reserves?.tokenA || 0,
+            token_y: chainPoolDetail.reserves?.tokenB || 0
+          }
+        };
+        return res.json({ success: true, data: formattedPoolDetail });
+      }
+    } catch (chainError) {
+      logger.warn(`从链上获取池${address}详情失败: ${chainError.message}`);
+    }
+    
+    // 如果链上获取失败，尝试从API获取的所有池数据中查找
+    const allPools = await meteoraCollector.getAllPools();
+    const poolDetail = allPools.find(pool => pool.address === address);
+    
+    if (!poolDetail) {
+      return res.status(404).json({ success: false, error: '未找到池数据' });
+    }
+    
+    // 处理池数据以确保格式一致
+    const processedPoolDetail = meteoraCollector.processPoolData([poolDetail])[0];
+    
+    res.json({ success: true, data: processedPoolDetail });
   } catch (error) {
-    logger.error(`获取池${req.params.address}详情失败:`, error);
+    logger.error(`获取池${req.params.address}详情失败: ${error.message}`);
     res.status(500).json({ success: false, error: error.message });
   }
 });
