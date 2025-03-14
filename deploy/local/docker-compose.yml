@@ -8,7 +8,10 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./frontend:/app
+      - ../../services/frontend:/app
+      - ../../config/frontend:/app/config
+    env_file:
+      - ../../config/frontend/.env
     environment:
       - NODE_ENV=production
       - REACT_APP_API_URL=http://localhost:3001
@@ -26,8 +29,11 @@ services:
     ports:
       - "3001:3000"
     volumes:
-      - ./api-service:/app/api-service
-      - ../libs:/app/libs
+      - ../../services/api-service:/app/api-service
+      - ../../libs:/app/libs
+      - ../../config/api-service:/app/api-service/config
+    env_file:
+      - ../../config/api-service/.env
     environment:
       - NODE_ENV=production
       - SIGNAL_SERVICE_URL=http://signal-service:3000
@@ -58,7 +64,10 @@ services:
     ports:
       - "3002:3000"
     volumes:
-      - ./data-service:/app/data-service
+      - ../../services/data-service:/app/data-service
+      - ../../config/data-service:/app/data-service/config
+    env_file:
+      - ../../config/data-service/.env
     environment:
       - PORT=3000
       - DATA_COLLECTION_INTERVAL=300000
@@ -85,7 +94,10 @@ services:
     ports:
       - "3003:3000"
     volumes:
-      - ./signal-service:/app/signal-service
+      - ../../services/signal-service:/app/signal-service
+      - ../../config/signal-service:/app/signal-service/config
+    env_file:
+      - ../../config/signal-service/.env
     environment:
       - PORT=3000
       - RABBITMQ_HOST=rabbitmq
@@ -107,8 +119,11 @@ services:
     ports:
       - "3004:3000"
     volumes:
-      - ./scoring-service:/app/scoring-service
-      - ../libs:/app/libs
+      - ../../services/scoring-service:/app/scoring-service
+      - ../../libs:/app/libs
+      - ../../config/scoring-service:/app/scoring-service/config
+    env_file:
+      - ../../config/scoring-service/.env
     environment:
       - NODE_ENV=production
       - MONGODB_URI=mongodb://mongodb:27017/liqpro
@@ -131,8 +146,11 @@ services:
     ports:
       - "3005:3000"
     volumes:
-      - ./agent-engine:/app/agent-engine
-      - ../libs:/app/libs
+      - ../../services/agent-engine:/app/agent-engine
+      - ../../libs:/app/libs
+      - ../../config/agent-engine:/app/agent-engine/config
+    env_file:
+      - ../../config/agent-engine/.env
     environment:
       - NODE_ENV=production
       - MONGODB_URI=mongodb://mongodb:27017/liqpro
@@ -161,7 +179,10 @@ services:
     ports:
       - "3006:3000"
     volumes:
-      - ./solana-cache:/app/solana-cache
+      - ../../services/solana-cache:/app/solana-cache
+      - ../../config/solana-cache:/app/solana-cache/config
+    env_file:
+      - ../../config/solana-cache/.env
     environment:
       - PORT=3000
       - SOLANA_RPC_ENDPOINT=https://api.mainnet-beta.solana.com
