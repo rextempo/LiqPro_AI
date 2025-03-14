@@ -32,7 +32,7 @@ services:
     environment:
       - NODE_ENV=production
       - SIGNAL_SERVICE_URL=http://signal-service:3000
-      - DATA_SERVICE_URL=http://data-service:3000
+      - DATA_SERVICE_URL=http://data-service-real:3000
       - SCORING_SERVICE_URL=http://scoring-service:3000
       - AGENT_SERVICE_URL=http://agent-engine:3000
       - RABBITMQ_PORT=5672
@@ -56,28 +56,7 @@ services:
              npm start"
     restart: unless-stopped
 
-  # 数据服务
-  data-service:
-    build:
-      context: .
-      dockerfile: Dockerfile.data-service
-    ports:
-      - "3000:3000"
-    environment:
-      - PORT=3000
-      - DATA_COLLECTION_INTERVAL=300000
-      - MONGO_URI=mongodb://mongodb:27017/liqpro
-      - SOLANA_RPC_ENDPOINT=https://api.mainnet-beta.solana.com
-      - LOG_LEVEL=info
-      - HOURLY_SNAPSHOTS_TO_KEEP=168
-      - DAILY_SNAPSHOTS_TO_KEEP=90
-      - WEEKLY_SNAPSHOTS_TO_KEEP=52
-    depends_on:
-      - mongodb
-    volumes:
-      - ./logs:/app/logs
-    restart: unless-stopped
-
+  # 数据服务（真实版）
   data-service-real:
     build:
       context: .
@@ -177,14 +156,14 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - SIGNAL_SERVICE_URL=http://signal-service:3000
-      - DATA_SERVICE_URL=http://data-service:3000
+      - DATA_SERVICE_URL=http://data-service-real:3000
       - SCORING_SERVICE_URL=http://scoring-service:3000
     networks:
       - liqpro-network
     depends_on:
       - mongodb
       - rabbitmq
-      - data-service
+      - data-service-real
       - signal-service
       - scoring-service
     command: >

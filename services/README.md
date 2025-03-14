@@ -5,7 +5,7 @@
 ## 服务列表
 
 1. **API Service** - API 网关服务
-2. **Data Service** - 数据收集和处理服务
+2. **Data Service Real** - 真实数据收集和处理服务（位于production目录）
 3. **Signal Service** - 信号生成服务
 4. **Scoring Service** - 风险评分服务
 5. **Agent Engine** - 代理引擎服务
@@ -23,7 +23,7 @@ docker-compose up -d
 
 - Frontend: 3000
 - API Service: 3001
-- Data Service: 3002
+- Data Service Real: 3002
 - Signal Service: 3003
 - Scoring Service: 3004
 - Agent Engine: 3005

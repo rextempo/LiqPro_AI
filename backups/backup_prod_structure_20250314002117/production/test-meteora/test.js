@@ -1,1 +1,0 @@
-const { Connection } = require("@solana/web3.js"); const { default: DLMM } = require("@meteora-ag/dlmm"); async function main() { const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed"); const dlmm = new DLMM(connection, "mainnet-beta"); console.log("DLMM methods:", Object.getOwnPropertyNames(DLMM.prototype)); } main().catch(console.error);

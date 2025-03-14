@@ -2,6 +2,7 @@ import axios from 'axios';
 import { createLogger } from '@liqpro/monitoring';
 import { MongoDBStorage } from './storage/mongodb-storage';
 import { Finality } from '@solana/web3.js';
+import mongoose from 'mongoose';
 
 const logger = createLogger({
   serviceName: 'api-service:data-controller',
@@ -72,7 +73,7 @@ export class DataController {
   private async checkServicesHealth(): Promise<void> {
     try {
       const services = [
-        { name: 'data-service', url: `${this.config.services.dataServiceUrl}/health` },
+        { name: 'data-service-real', url: `${this.config.services.dataServiceUrl}/health` },
         { name: 'signal-service', url: `${this.config.services.signalServiceUrl}/health` },
         { name: 'scoring-service', url: `${this.config.services.scoringServiceUrl}/health` },
         { name: 'agent-service', url: `${this.config.services.agentServiceUrl}/health` },
@@ -168,17 +169,24 @@ export class DataController {
   }
 
   /**
-   * Get signals from signal service
+   * Get signals from MongoDB
    */
   async getSignals(options: { limit?: number; offset?: number } = {}): Promise<any[]> {
     try {
-      const response = await axios.get(`${this.config.services.signalServiceUrl}/api/signals`, {
-        params: options,
-      });
+      const { limit = 20, offset = 0 } = options;
       
-      return response.data;
+      // 使用 mongoose 直接从 MongoDB 获取信号数据
+      const Signal = mongoose.model('Signal', new mongoose.Schema({}, { strict: false }));
+      
+      // 从数据库获取信号数据
+      const signals = await Signal.find()
+        .sort({ analysis_timestamp: -1 })
+        .skip(Number(offset))
+        .limit(Number(limit));
+      
+      return signals;
     } catch (error) {
-      logger.error('Failed to get signals', { 
+      logger.error('Failed to get signals from MongoDB', { 
         error: error instanceof Error ? error.message : String(error)
       });
       throw error;
@@ -190,13 +198,19 @@ export class DataController {
    */
   async getSignalById(id: string): Promise<any> {
     try {
-      const response = await axios.get(
-        `${this.config.services.signalServiceUrl}/api/signals/${id}`
-      );
+      // 使用 mongoose 直接从 MongoDB 获取信号数据
+      const Signal = mongoose.model('Signal', new mongoose.Schema({}, { strict: false }));
       
-      return response.data;
+      // 从数据库获取特定信号
+      const signal = await Signal.findOne({ id });
+      
+      if (!signal) {
+        throw new Error(`Signal with ID ${id} not found`);
+      }
+      
+      return signal;
     } catch (error) {
-      logger.error('Failed to get signal by ID', { 
+      logger.error('Failed to get signal by ID from MongoDB', { 
         id, 
         error: error instanceof Error ? error.message : String(error)
       });

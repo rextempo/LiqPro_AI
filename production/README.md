@@ -61,7 +61,7 @@ production/
 LiqPro平台包含以下微服务：
 
 1. **API服务** (`api-service`) - API网关服务
-2. **数据服务** (`data-service`) - 数据收集和处理服务
+2. **数据服务Real** (`data-service-real`) - 真实数据收集和处理服务
 3. **信号服务** (`signal-service`) - 信号生成服务
 4. **评分服务** (`scoring-service`) - 风险评分服务
 5. **代理引擎** (`agent-engine`) - 代理引擎服务

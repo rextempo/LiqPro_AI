@@ -66,8 +66,42 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=liqpro
-      - RABBITMQ_PASS=liqpro
+      - RABBITMQ_PASS=liqpro_password
       - SOLANA_RPC_ENDPOINT=https://api.mainnet-beta.solana.com
+      - LOG_LEVEL=info
+    networks:
+      - liqpro-network
+    depends_on:
+      - mongodb
+      - rabbitmq
+    command: >
+      sh -c "npm install && node server.js"
+    restart: unless-stopped
+
+  # 真实数据服务
+  data-service-real:
+    image: node:18
+    working_dir: /app/data-service-real
+    ports:
+      - "3007:3000"
+    volumes:
+      - ./data-service-real:/app/data-service-real
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    environment:
+      - PORT=3000
+      - DATA_COLLECTION_INTERVAL=300000
+      - MONGODB_HOST=mongodb
+      - MONGODB_PORT=27017
+      - MONGODB_USER=liqpro
+      - MONGODB_PASS=liqpro_password
+      - MONGODB_DB=liqpro
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=liqpro
+      - RABBITMQ_PASS=liqpro_password
+      - SOLANA_RPC_ENDPOINT=https://soft-snowy-asphalt.solana-mainnet.quiknode.pro/48639631c6e4e81af5a0b8e228f6f9a0329154b7/
       - LOG_LEVEL=info
     networks:
       - liqpro-network
@@ -91,7 +125,7 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=liqpro
-      - RABBITMQ_PASS=liqpro
+      - RABBITMQ_PASS=liqpro_password
     networks:
       - liqpro-network
     depends_on:

@@ -1,0 +1,23 @@
+{
+  "name": "data-service-real",
+  "version": "1.0.0",
+  "description": "LiqPro Real Data Service for Meteora DLMM",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "@meteora-ag/dlmm": "^1.0.0",
+    "@solana/web3.js": "^1.87.6",
+    "amqplib": "^0.10.3",
+    "axios": "^1.6.2",
+    "express": "^4.18.2",
+    "mongoose": "^7.5.0",
+    "node-fetch": "^3.3.2",
+    "winston": "^3.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+} 

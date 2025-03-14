@@ -34,8 +34,8 @@ const config = {
     dbName: process.env.MONGODB_DB_NAME || 'liqpro',
   },
   services: {
-    dataServiceUrl: process.env.DATA_SERVICE_URL || 'http://data-service:3000',
-    signalServiceUrl: process.env.SIGNAL_SERVICE_URL || 'http://signal-service:3000',
+    dataServiceUrl: process.env.DATA_SERVICE_URL || 'http://data-service-real:3002',
+    signalServiceUrl: process.env.SIGNAL_SERVICE_URL || 'http://signal-service:3002',
     scoringServiceUrl: process.env.SCORING_SERVICE_URL || 'http://scoring-service:3000',
     agentServiceUrl: process.env.AGENT_SERVICE_URL || 'http://agent-engine:3000',
   }

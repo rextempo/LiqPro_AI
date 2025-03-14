@@ -9,29 +9,28 @@ const DLMM = meteoraModule.default;
  */
 class MeteoraPoolCollector {
   constructor(options = {}) {
-    // 使用Meteora的正确API端点
     this.apiBaseUrl = options.apiBaseUrl || 'https://dlmm-api.meteora.ag';
-    this.solanaRpcEndpoint = options.solanaRpcEndpoint || 'https://soft-snowy-asphalt.solana-mainnet.quiknode.pro/48639631c6e4e81af5a0b8e228f6f9a0329154b7/';
+    this.solanaRpcEndpoint = options.solanaRpcEndpoint || 'https://api.mainnet-beta.solana.com';
     this.logger = options.logger || console;
-    
-    // 初始化Solana连接，使用更多选项
-    this.connection = new Connection(this.solanaRpcEndpoint, {
-      commitment: 'confirmed',
-      disableRetryOnRateLimit: false,
-      httpHeaders: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'LiqPro/1.0'
-      }
-    });
-    
-    // 初始化缓存
-    this.poolsCache = {};
-    this.allPoolsCache = null;
+    this.connection = new Connection(this.solanaRpcEndpoint);
     this.lastUpdated = null;
     this.updateInterval = 300000; // 默认5分钟更新一次
     
     // 初始化DLMM实例缓存
     this.dlmmInstances = {};
+    
+    // 初始化代币信息缓存
+    this.tokenInfoCache = {};
+    
+    // 添加API请求缓存
+    this.apiCache = new Map();
+    this.cacheExpiry = 60000; // 缓存有效期1分钟
+    
+    // 添加API请求限制计数器
+    this.apiLimitCounter = 0;
+    this.apiLimitResetTime = Date.now() + 10000; // 10秒重置一次
+    this.apiLimitMax = 10; // 10秒内最多10个请求
+    this.consecutiveErrors = 0; // 连续错误计数
     
     // Meteora程序ID
     this.meteoraProgramId = new PublicKey('LBUZKhRxPF3XoTQpjVJ3XQPoJER6HADJAKRbWGVzMZ7');
@@ -39,7 +38,7 @@ class MeteoraPoolCollector {
     // 创建axios实例，设置超时和重试
     this.api = axios.create({
       baseURL: this.apiBaseUrl,
-      timeout: 30000,
+      timeout: 60000, // 增加超时时间到60秒
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -47,140 +46,180 @@ class MeteoraPoolCollector {
       }
     });
     
+    // 添加请求拦截器，实现请求限制和缓存
+    this.api.interceptors.request.use(async (config) => {
+      const cacheKey = `${config.method}:${config.url}:${JSON.stringify(config.params || {})}`;
+      
+      // 检查缓存
+      if (config.method.toLowerCase() === 'get') {
+        const cachedResponse = this.apiCache.get(cacheKey);
+        if (cachedResponse && cachedResponse.expiry > Date.now()) {
+          // 返回缓存的响应
+          return Promise.reject({
+            config,
+            response: {
+              status: 200,
+              data: cachedResponse.data,
+              __fromCache: true
+            }
+          });
+        }
+      }
+      
+      // 检查API限制
+      if (Date.now() > this.apiLimitResetTime) {
+        // 重置计数器
+        this.apiLimitCounter = 0;
+        this.apiLimitResetTime = Date.now() + 10000;
+      }
+      
+      if (this.apiLimitCounter >= this.apiLimitMax) {
+        // 计算需要等待的时间
+        const waitTime = this.apiLimitResetTime - Date.now();
+        if (waitTime > 0) {
+          this.logger.warn(`API请求达到限制，等待${waitTime}ms后重试...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          // 重置计数器
+          this.apiLimitCounter = 0;
+          this.apiLimitResetTime = Date.now() + 10000;
+        }
+      }
+      
+      // 增加计数器
+      this.apiLimitCounter++;
+      
+      // 添加随机延迟，避免请求过于频繁
+      const delay = Math.floor(Math.random() * 1000) + 500; // 500-1500ms随机延迟
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      return config;
+    });
+    
+    // 添加响应拦截器，处理429错误和缓存响应
+    this.api.interceptors.response.use(
+      response => {
+        // 重置连续错误计数
+        this.consecutiveErrors = 0;
+        
+        // 缓存GET请求的响应
+        if (response.config.method.toLowerCase() === 'get') {
+          const cacheKey = `${response.config.method}:${response.config.url}:${JSON.stringify(response.config.params || {})}`;
+          this.apiCache.set(cacheKey, {
+            data: response.data,
+            expiry: Date.now() + this.cacheExpiry
+          });
+        }
+        
+        return response;
+      },
+      async error => {
+        // 如果是缓存响应，直接返回
+        if (error.response && error.response.__fromCache) {
+          return Promise.resolve(error.response);
+        }
+        
+        // 处理429错误
+        if (error.response && error.response.status === 429) {
+          this.consecutiveErrors++;
+          
+          // 计算退避时间，使用指数退避策略
+          const backoffTime = Math.min(2000 * Math.pow(2, this.consecutiveErrors - 1), 30000);
+          
+          this.logger.warn(`API请求限制，等待${backoffTime}ms后重试...`);
+          
+          // 等待退避时间后重试
+          await new Promise(resolve => setTimeout(resolve, backoffTime));
+          
+          // 减少API限制计数器，避免连续触发限制
+          this.apiLimitCounter = Math.max(0, this.apiLimitCounter - 1);
+          
+          return this.api.request(error.config);
+        }
+        
+        // 处理其他错误
+        this.logger.error(`API请求失败: ${error.message}`);
+        throw error;
+      }
+    );
+    
     this.logger.info('MeteoraPoolCollector初始化成功');
   }
 
   /**
-   * 获取高活跃度池列表
-   * @param {number} limit - 返回的池数量限制
-   * @returns {Promise<Array>} - 池数据数组
+   * 获取高活跃度池
+   * @param {number} limit 限制数量
+   * @returns {Promise<Array>} 池数组
    */
   async getHighActivityPools(limit = 100) {
     try {
       this.logger.info(`正在获取Meteora高活跃度池数据，限制: ${limit}个`);
       
-      // 直接从Meteora API获取池数据
-      try {
-        // 根据Meteora API文档，使用正确的端点
-        const response = await this.api.get('/pair/all');
+      // 使用缓存键
+      const cacheKey = `highActivityPools:${limit}`;
+      const cachedData = this.apiCache.get(cacheKey);
+      
+      // 如果有缓存且未过期，直接返回缓存数据
+      if (cachedData && cachedData.expiry > Date.now()) {
+        this.logger.info(`使用缓存的高活跃度池数据，共${cachedData.data.length}个`);
+        return cachedData.data;
+      }
+      
+      // 分批获取数据，每批次最多获取20个
+      const batchSize = 20;
+      const batches = Math.ceil(limit / batchSize);
+      let allPools = [];
+      
+      for (let i = 0; i < batches; i++) {
+        const batchLimit = Math.min(batchSize, limit - i * batchSize);
+        if (batchLimit <= 0) break;
         
-        if (response.status === 200 && response.data) {
-          let pools = response.data;
-          if (!Array.isArray(pools)) {
-            if (pools.data && Array.isArray(pools.data)) {
-              pools = pools.data;
-            } else if (pools.pairs && Array.isArray(pools.pairs)) {
-              pools = pools.pairs;
-            } else if (pools.pools && Array.isArray(pools.pools)) {
-              pools = pools.pools;
-            } else {
-              throw new Error('API返回的数据格式不正确');
-            }
-          }
-          
-          this.logger.info(`成功从Meteora API获取${pools.length}个池数据`);
-          
-          // 处理池数据
-          const processedPools = this.processPoolData(pools);
-          
-          // 按交易量排序
-          const sortedPools = processedPools
-            .filter(pool => pool.volume24h && pool.volume24h > 0)
-            .sort((a, b) => b.volume24h - a.volume24h);
-          
-          // 返回前N个高活跃度池
-          return sortedPools.slice(0, limit);
-        } else {
-          throw new Error('Meteora API返回的数据格式不正确');
-        }
-      } catch (apiError) {
-        this.logger.warn(`从Meteora API获取高活跃度池数据失败: ${apiError.message}`);
+        this.logger.info(`获取第${i+1}/${batches}批高活跃度池数据，批次大小: ${batchLimit}`);
         
-        // 尝试从另一个API端点获取
-        try {
-          const response = await this.api.get('/pools');
-          
-          if (response.status === 200 && response.data) {
-            let pools = response.data;
-            if (!Array.isArray(pools)) {
-              if (pools.data && Array.isArray(pools.data)) {
-                pools = pools.data;
-              } else if (pools.pairs && Array.isArray(pools.pairs)) {
-                pools = pools.pairs;
-              } else if (pools.pools && Array.isArray(pools.pools)) {
-                pools = pools.pools;
-              } else {
-                throw new Error('API返回的数据格式不正确');
-              }
-            }
-            
-            this.logger.info(`成功从Meteora API备用端点获取${pools.length}个池数据`);
-            
-            // 处理池数据
-            const processedPools = this.processPoolData(pools);
-            
-            // 按交易量排序
-            const sortedPools = processedPools
-              .filter(pool => pool.volume24h && pool.volume24h > 0)
-              .sort((a, b) => b.volume24h - a.volume24h);
-            
-            // 返回前N个高活跃度池
-            return sortedPools.slice(0, limit);
-          } else {
-            throw new Error('Meteora API备用端点返回的数据格式不正确');
+        const response = await this.api.get('/pools', {
+          params: {
+            limit: batchLimit,
+            offset: i * batchSize,
+            sortBy: 'volume24h',
+            sortDirection: 'desc'
           }
-        } catch (backupError) {
-          this.logger.warn(`从Meteora API备用端点获取高活跃度池数据失败: ${backupError.message}`);
+        });
+        
+        if (response.data && Array.isArray(response.data)) {
+          allPools = allPools.concat(response.data);
+          this.logger.info(`成功获取第${i+1}批高活跃度池数据，本批次: ${response.data.length}个`);
           
-          // 如果API获取失败，尝试从链上获取
-          this.logger.info('尝试从链上获取Meteora池数据');
-          
-          // 使用getProgramAccounts获取池数据
-          const accounts = await this.connection.getProgramAccounts(this.meteoraProgramId, {
-            filters: [
-              {
-                dataSize: 976, // DLMM池账户大小
-              },
-            ],
-            commitment: 'confirmed'
-          });
-          
-          this.logger.info(`从链上找到${accounts.length}个可能的Meteora池账户`);
-          
-          if (accounts.length === 0) {
-            throw new Error('从链上未找到任何Meteora池账户');
+          // 如果不是最后一批，添加延迟避免触发限制
+          if (i < batches - 1) {
+            const delay = 2000 + Math.random() * 1000;
+            this.logger.info(`等待${Math.round(delay)}ms后获取下一批数据...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
           }
-          
-          // 解析每个账户数据
-          const pools = [];
-          const maxAccounts = Math.min(accounts.length, limit);
-          
-          for (const account of accounts.slice(0, maxAccounts)) {
-            try {
-              const poolAddress = account.pubkey.toString();
-              this.logger.info(`尝试从链上获取池${poolAddress}的详情`);
-              
-              const poolData = await this.getPoolDetailFromChain(poolAddress);
-              if (poolData) {
-                pools.push(poolData);
-                this.logger.info(`成功获取池${poolAddress}的详情`);
-              }
-            } catch (error) {
-              this.logger.warn(`解析池账户数据失败: ${error.message}`);
-            }
-          }
-          
-          if (pools.length === 0) {
-            throw new Error('无法从链上解析任何池数据');
-          }
-          
-          this.logger.info(`成功从链上解析${pools.length}个Meteora池数据`);
-          return pools;
         }
       }
+      
+      // 处理池数据，添加代币信息
+      const processedPools = await this.processPoolDataWithTokenInfo(allPools);
+      
+      // 缓存处理后的数据
+      this.apiCache.set(cacheKey, {
+        data: processedPools,
+        expiry: Date.now() + this.cacheExpiry
+      });
+      
+      this.logger.info(`成功获取并处理${processedPools.length}个高活跃度池数据`);
+      return processedPools;
     } catch (error) {
-      this.logger.error('获取高活跃度池失败:', error.message);
-      throw new Error(`获取高活跃度池失败: ${error.message}`);
+      this.logger.warn(`从Meteora API获取高活跃度池数据失败: ${error.message}`);
+      
+      // 如果有缓存，即使过期也返回
+      const cacheKey = `highActivityPools:${limit}`;
+      const cachedData = this.apiCache.get(cacheKey);
+      if (cachedData) {
+        this.logger.info(`使用过期的缓存数据，共${cachedData.data.length}个`);
+        return cachedData.data;
+      }
+      
+      throw error;
     }
   }
 
@@ -425,12 +464,298 @@ class MeteoraPoolCollector {
   }
 
   /**
-   * 处理池数据，统一格式
-   * @param {Array} poolsData - 从API获取的池数据数组
+   * 缩短地址用于显示
+   * @param {string} address - 要缩短的地址
+   * @returns {string} - 缩短后的地址
+   */
+  shortenAddress(address) {
+    if (!address || address.length < 10) return address;
+    return `${address.substring(0, 4)}...${address.substring(address.length - 4)}`;
+  }
+
+  /**
+   * 标准化代币信息
+   * @param {string} tokenInfo - 代币地址或符号
+   * @returns {Object} - 标准化的代币信息
+   */
+  normalizeTokenInfo(tokenInfo) {
+    // 已知代币地址映射表
+    const knownTokens = {
+      'So11111111111111111111111111111111111111112': { symbol: 'SOL', name: 'Solana' },
+      'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': { symbol: 'USDC', name: 'USD Coin' },
+      'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB': { symbol: 'USDT', name: 'Tether USD' },
+      'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263': { symbol: 'BONK', name: 'Bonk' },
+      'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So': { symbol: 'mSOL', name: 'Marinade staked SOL' },
+      'DUSTawucrTsGU8hcqRdHDCbuYhCPADMLM2VcCb8VnFnQ': { symbol: 'DUST', name: 'DUST Protocol' },
+      'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4': { symbol: 'JUP', name: 'Jupiter' },
+      'RLBxxFkseAZ4RgJH3Sqn8jXxhmGoz9jWxDNJMh8pL7a': { symbol: 'RLB', name: 'Rollbit' },
+      'hntyVP6YFm1Hg25TN9WGLqM12b8TQmcknKrdu1oxWux': { symbol: 'HNT', name: 'Helium' },
+      'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE': { symbol: 'ORCA', name: 'Orca' },
+      'MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac': { symbol: 'MNGO', name: 'Mango' },
+      'SHDWyBxihqiCj6YekG2GUr7wqKLeLAMK1gHZck9pL6y': { symbol: 'SHDW', name: 'Shadow' },
+      'DUSTcnwRpZjhds1tLY2NxKNQVTjkVn1D73JGSNEYwzZE': { symbol: 'DUST', name: 'DUST Protocol' },
+      'DFL1zNkaGPWm1BqAVqRjCZvHmwTFrEaJtbzJWgseoNJh': { symbol: 'DFL', name: 'DeFi Land' },
+      'HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3': { symbol: 'PYTH', name: 'Pyth Network' },
+      'AFbX8oGjGpmVFywbVouvhQSRmiW2aR1mohfahi4Y2AdB': { symbol: 'GST', name: 'Green Satoshi Token' },
+      // 添加更多已知代币...
+    };
+    
+    // 检查是否是已知代币地址
+    if (knownTokens[tokenInfo]) {
+      return {
+        address: tokenInfo,
+        symbol: knownTokens[tokenInfo].symbol,
+        name: knownTokens[tokenInfo].name,
+        decimals: 9 // 默认值，大多数代币是9位小数
+      };
+    }
+    
+    // 如果不是已知代币，尝试根据地址格式判断
+    if (tokenInfo && tokenInfo.length > 30) {
+      // 看起来像是一个地址，但我们不认识它
+      return {
+        address: tokenInfo,
+        symbol: this.shortenAddress(tokenInfo),
+        name: `Unknown Token (${this.shortenAddress(tokenInfo)})`,
+        decimals: 9 // 默认值
+      };
+    }
+    
+    // 默认情况
+    return {
+      address: 'unknown',
+      symbol: tokenInfo || 'Unknown',
+      name: 'Unknown Token',
+      decimals: 9 // 默认值
+    };
+  }
+
+  /**
+   * 获取代币信息
+   * @param {string} tokenAddress - 代币地址
+   * @returns {Promise<Object>} - 代币信息
+   */
+  async getTokenInfo(tokenAddress) {
+    // 检查缓存
+    if (this.tokenInfoCache[tokenAddress]) {
+      return this.tokenInfoCache[tokenAddress];
+    }
+    
+    // 首先尝试使用已知代币映射
+    const knownTokenInfo = this.normalizeTokenInfo(tokenAddress);
+    if (knownTokenInfo.symbol !== 'Unknown' && knownTokenInfo.symbol !== this.shortenAddress(tokenAddress)) {
+      // 已知代币，缓存并返回
+      this.tokenInfoCache[tokenAddress] = knownTokenInfo;
+      return knownTokenInfo;
+    }
+    
+    try {
+      // 尝试从 Meteora API 获取代币信息
+      const response = await this.api.get(`/token/${tokenAddress}`);
+      
+      if (response.status === 200 && response.data) {
+        const tokenData = response.data;
+        const tokenInfo = {
+          address: tokenAddress,
+          symbol: tokenData.symbol || this.shortenAddress(tokenAddress),
+          name: tokenData.name || `Token ${this.shortenAddress(tokenAddress)}`,
+          decimals: tokenData.decimals || 9
+        };
+        
+        // 缓存结果
+        this.tokenInfoCache[tokenAddress] = tokenInfo;
+        return tokenInfo;
+      }
+    } catch (error) {
+      this.logger.warn(`从 API 获取代币 ${tokenAddress} 信息失败: ${error.message}`);
+    }
+    
+    try {
+      // 尝试从 Solana 区块链获取代币信息
+      const tokenMint = new PublicKey(tokenAddress);
+      const tokenInfo = await this.connection.getParsedAccountInfo(tokenMint);
+      
+      if (tokenInfo && tokenInfo.value && tokenInfo.value.data) {
+        const parsedData = tokenInfo.value.data;
+        if (parsedData.parsed && parsedData.parsed.info) {
+          const info = parsedData.parsed.info;
+          const tokenData = {
+            address: tokenAddress,
+            symbol: info.symbol || this.shortenAddress(tokenAddress),
+            name: info.name || `Token ${this.shortenAddress(tokenAddress)}`,
+            decimals: info.decimals || 9
+          };
+          
+          // 缓存结果
+          this.tokenInfoCache[tokenAddress] = tokenData;
+          return tokenData;
+        }
+      }
+    } catch (error) {
+      this.logger.warn(`从区块链获取代币 ${tokenAddress} 信息失败: ${error.message}`);
+    }
+    
+    // 所有方法都失败，返回基本信息
+    return knownTokenInfo;
+  }
+
+  /**
+   * 处理池数据，并获取更详细的代币信息
+   * @param {Array} poolsData - 从 API 获取的池数据数组
+   * @returns {Promise<Array>} - 处理后的池数据数组
+   */
+  async processPoolDataWithTokenInfo(poolsData) {
+    try {
+      this.logger.info(`开始处理 ${poolsData.length} 个池数据，获取更详细的代币信息`);
+      
+      if (!Array.isArray(poolsData)) {
+        this.logger.error('处理池数据失败: 输入不是数组');
+        throw new Error('Pool data must be an array');
+      }
+      
+      // 收集所有唯一的代币地址
+      const tokenAddresses = new Set();
+      poolsData.forEach(pool => {
+        if (pool.mint_x && pool.mint_x !== '11111111111111111111111111111111') {
+          tokenAddresses.add(pool.mint_x);
+        }
+        if (pool.mint_y && pool.mint_y !== '11111111111111111111111111111111') {
+          tokenAddresses.add(pool.mint_y);
+        }
+        if (pool.tokenAAddress && pool.tokenAAddress !== '11111111111111111111111111111111') {
+          tokenAddresses.add(pool.tokenAAddress);
+        }
+        if (pool.tokenBAddress && pool.tokenBAddress !== '11111111111111111111111111111111') {
+          tokenAddresses.add(pool.tokenBAddress);
+        }
+      });
+      
+      this.logger.info(`发现 ${tokenAddresses.size} 个唯一代币地址`);
+      
+      // 获取所有代币信息
+      const tokenInfoMap = {};
+      const tokenInfoPromises = Array.from(tokenAddresses).map(address => 
+        this.getTokenInfo(address).then(info => {
+          tokenInfoMap[address] = info;
+          return info;
+        }).catch(err => {
+          this.logger.warn(`获取代币 ${address} 信息失败: ${err.message}`);
+          tokenInfoMap[address] = { symbol: 'Unknown', address: address };
+          return { symbol: 'Unknown', address: address };
+        })
+      );
+      
+      await Promise.all(tokenInfoPromises);
+      
+      this.logger.info(`成功获取 ${Object.keys(tokenInfoMap).length} 个代币的信息`);
+      
+      // 处理池数据
+      const processedPools = poolsData.map(pool => {
+        // 从池子名称中提取代币符号
+        let tokenASymbol = 'Unknown';
+        let tokenBSymbol = 'Unknown';
+        
+        if (pool.name) {
+          const nameParts = pool.name.split(/[-\/]/);
+          if (nameParts.length >= 2) {
+            tokenASymbol = nameParts[0].trim();
+            tokenBSymbol = nameParts[1].trim();
+          }
+        }
+        
+        // 确定代币地址
+        const tokenAAddress = pool.mint_x || pool.tokenAAddress || pool.tokenXAddress || pool.token0Address;
+        const tokenBAddress = pool.mint_y || pool.tokenBAddress || pool.tokenYAddress || pool.token1Address;
+        
+        // 获取代币信息，优先使用从名称中提取的符号
+        const tokenAInfo = tokenInfoMap[tokenAAddress] || { 
+          symbol: tokenASymbol, 
+          address: tokenAAddress || 'unknown' 
+        };
+        
+        const tokenBInfo = tokenInfoMap[tokenBAddress] || { 
+          symbol: tokenBSymbol, 
+          address: tokenBAddress || 'unknown' 
+        };
+        
+        // 如果代币信息中的符号是 Unknown 或缩写地址，使用从名称中提取的符号
+        if (tokenAInfo.symbol === 'Unknown' || tokenAInfo.symbol.includes('...')) {
+          tokenAInfo.symbol = tokenASymbol;
+        }
+        
+        if (tokenBInfo.symbol === 'Unknown' || tokenBInfo.symbol.includes('...')) {
+          tokenBInfo.symbol = tokenBSymbol;
+        }
+        
+        // 解析数值字段
+        const liquidity = this.parseNumericValue(pool.liquidity || pool.tvl);
+        const volume24h = this.parseNumericValue(pool.volume24h || pool.trade_volume_24h);
+        const fees24h = this.parseNumericValue(pool.fees24h || pool.fees_24h || (pool.fees && pool.fees.total24h));
+        const currentPrice = this.parseNumericValue(pool.currentPrice || pool.price || pool.current_price);
+        
+        // 计算收益率（基于24h fees/TVL）
+        const apr = liquidity > 0 ? (fees24h / liquidity) * 365 * 100 : 0;
+        
+        // 构建处理后的数据
+        const processedData = {
+          address: pool.address || pool.id,
+          tokenA: tokenAInfo.symbol,
+          tokenB: tokenBInfo.symbol,
+          tokenAAddress: tokenAInfo.address,
+          tokenBAddress: tokenBInfo.address,
+          feeTier: this.parseNumericValue(pool.feeTier || pool.base_fee_percentage || pool.fee),
+          binStep: this.parseNumericValue(pool.binStep || pool.bin_step),
+          liquidity,
+          volume24h,
+          price: currentPrice,
+          status: pool.is_blacklisted ? 'blacklisted' : (pool.hide ? 'hidden' : 'enabled'),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          reserves: {
+            tokenA: this.parseNumericValue(pool.reserves?.tokenA || pool.reserve_x_amount || (pool.reserves && pool.reserves[0])),
+            tokenB: this.parseNumericValue(pool.reserves?.tokenB || pool.reserve_y_amount || (pool.reserves && pool.reserves[1]))
+          },
+          fees: {
+            base: this.parseNumericValue(pool.base_fee_percentage),
+            max: this.parseNumericValue(pool.max_fee_percentage),
+            total24h: fees24h
+          },
+          volumeHistory: {
+            cumulative: this.parseNumericValue(pool.cumulative_trade_volume),
+            fees: this.parseNumericValue(pool.cumulative_fee_volume)
+          },
+          yields: {
+            apr,
+            feesToTVL: liquidity > 0 ? fees24h / liquidity : 0,
+            feesToTVLPercent: liquidity > 0 ? (fees24h / liquidity) * 100 : 0
+          },
+          tags: pool.tags || [],
+          name: pool.name || `${tokenAInfo.symbol}-${tokenBInfo.symbol}`
+        };
+        
+        return processedData;
+      });
+      
+      return processedPools;
+    } catch (error) {
+      this.logger.error(`处理池数据失败: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * 处理池数据
+   * @param {Array} poolsData - 池数据数组
    * @returns {Array} - 处理后的池数据数组
    */
   processPoolData(poolsData) {
     try {
+      // 使用增强的代币信息处理方法
+      return this.processPoolDataWithTokenInfo(poolsData);
+    } catch (error) {
+      this.logger.error(`增强的池数据处理失败，回退到基本处理: ${error.message}`);
+      
+      // 回退到基本处理逻辑
       return poolsData.map(pool => {
         // 提取代币符号
         let tokenA = 'Unknown';
@@ -492,9 +817,6 @@ class MeteoraPoolCollector {
           }
         };
       });
-    } catch (error) {
-      this.logger.error('处理池数据失败:', error.message);
-      throw new Error(`处理池数据失败: ${error.message}`);
     }
   }
 
