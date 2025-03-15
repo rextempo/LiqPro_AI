@@ -1,0 +1,26 @@
+{
+  "name": "@liqpro/shared",
+  "version": "0.1.0",
+  "description": "LiqPro Shared Types and Utilities",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint . --ext .ts"
+  },
+  "dependencies": {
+    "@jup-ag/core": "4.0.0-beta.21",
+    "@meteora-ag/dlmm-sdk": "0.7.7",
+    "@solana/web3.js": "1.90.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.11.19",
+    "@typescript-eslint/eslint-plugin": "7.0.1",
+    "@typescript-eslint/parser": "7.0.1",
+    "eslint": "9.0.0",
+    "jest": "29.7.0",
+    "ts-jest": "29.1.2",
+    "typescript": "5.3.3"
+  }
+} 

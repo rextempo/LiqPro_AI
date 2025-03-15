@@ -34,8 +34,8 @@ module.exports = {
   solana: {
     ...require('./default').solana,
     network: 'mainnet-beta',
-    rpcEndpoint: process.env.SOLANA_RPC_ENDPOINT || 'https://soft-snowy-asphalt.solana-mainnet.quiknode.pro/48639631c6e4e81af5a0b8e228f6f9a0329154b7/',
-    wsEndpoint: process.env.SOLANA_WS_ENDPOINT || 'wss://soft-snowy-asphalt.solana-mainnet.quiknode.pro/48639631c6e4e81af5a0b8e228f6f9a0329154b7/',
+    rpcEndpoint: 'https://soft-snowy-asphalt.solana-mainnet.quiknode.pro/48639631c6e4e81af5a0b8e228f6f9a0329154b7/',
+    wsEndpoint: 'wss://soft-snowy-asphalt.solana-mainnet.quiknode.pro/48639631c6e4e81af5a0b8e228f6f9a0329154b7/',
     timeout: 30000,
   },
 
@@ -46,9 +46,17 @@ module.exports = {
     timeout: process.env.JUPITER_API_TIMEOUT || 30000,
     slippageBps: process.env.JUPITER_SLIPPAGE_BPS || 50,
     maxAccounts: process.env.JUPITER_MAX_ACCOUNTS || 64,
-    priorityFeeLamports: process.env.JUPITER_PRIORITY_FEE_LAMPORTS || 10000000,
-    priorityLevel: process.env.JUPITER_PRIORITY_LEVEL || 'veryHigh',
-    dynamicSlippageMaxBps: process.env.JUPITER_DYNAMIC_SLIPPAGE_MAX_BPS || 300,
+    dynamicComputeUnitLimit: true,
+    wrapAndUnwrapSol: true,
+    prioritizationFeeLamports: {
+      priorityLevelWithMaxLamports: {
+        maxLamports: process.env.JUPITER_PRIORITY_FEE_LAMPORTS || 10000000,
+        priorityLevel: process.env.JUPITER_PRIORITY_LEVEL || 'veryHigh'
+      }
+    },
+    dynamicSlippage: {
+      maxBps: process.env.JUPITER_DYNAMIC_SLIPPAGE_MAX_BPS || 300
+    }
   },
 
   // 开发环境Meteora API配置

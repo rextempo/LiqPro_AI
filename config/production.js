@@ -41,8 +41,8 @@ module.exports = {
   solana: {
     ...require('./default').solana,
     network: 'mainnet-beta',
-    rpcEndpoint: process.env.SOLANA_RPC_ENDPOINT || 'https://soft-snowy-asphalt.solana-mainnet.quiknode.pro/48639631c6e4e81af5a0b8e228f6f9a0329154b7/',
-    wsEndpoint: process.env.SOLANA_WS_ENDPOINT || 'wss://soft-snowy-asphalt.solana-mainnet.quiknode.pro/48639631c6e4e81af5a0b8e228f6f9a0329154b7/',
+    rpcEndpoint: 'https://soft-snowy-asphalt.solana-mainnet.quiknode.pro/48639631c6e4e81af5a0b8e228f6f9a0329154b7/',
+    wsEndpoint: 'wss://soft-snowy-asphalt.solana-mainnet.quiknode.pro/48639631c6e4e81af5a0b8e228f6f9a0329154b7/',
     timeout: 30000,
   },
 

@@ -54,8 +54,9 @@
 * 格式化响应数据
 主要API端点设计:
 1. 认证API
-   * POST /api/auth/login - 用户登录
-   * POST /api/auth/register - 用户注册
+   * POST /api/auth/connect - 钱包连接请求，生成待签名的欢迎消息
+   * POST /api/auth/verify - 验证钱包签名并返回访问令牌
+   * GET /api/auth/nonce - 获取新的随机数(用于签名刷新)
 2. 池子数据API
    * GET /api/pools/recommended - 获取推荐池子
 3. Agent管理API
