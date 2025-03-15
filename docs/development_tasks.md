@@ -97,26 +97,85 @@
   - [x] 日志持久化
 
 ### 任务2.2：数据与监控模块
-- [ ] Meteora API集成
-  - [ ] API客户端封装
-  - [ ] 数据类型转换
-  - [ ] 错误处理
-- [ ] 缓存机制
-  - [ ] 内存缓存实现
-  - [ ] 缓存策略定义
-  - [ ] 失效机制
-- [ ] 池子数据功能
-  - [ ] 数据获取接口
-  - [ ] 数据解析逻辑
-  - [ ] 数据存储机制
-- [ ] 定时任务
-  - [ ] 任务调度器
-  - [ ] 数据更新任务
-  - [ ] 错误重试机制
-- [ ] 监控逻辑
-  - [ ] 流动性监控
-  - [ ] 价格监控
-  - [ ] 异常检测
+- [x] Meteora SDK集成
+  - [x] 在`backend/src/services/meteora.ts`中封装Meteora DLMM SDK
+  - [x] 实现`getAllPools()`方法获取所有池子基础数据
+  - [x] 实现`getPoolDetail(address: string)`方法获取单个池子详细数据
+  - [x] 处理API错误和限流情况，实现请求队列和重试机制
+
+- [x] 数据获取与筛选
+  - [x] 在`backend/src/core/data/pool-service.ts`中实现`getTop100Pools()`方法
+  - [x] 实现池子筛选逻辑（TVL > 10,000美元且成交量 > 20,000美元）
+  - [x] 实现按成交量降序排序
+  - [x] 配置5分钟定时更新机制
+
+- [x] 缓存机制
+  - [x] 在`backend/src/utils/cache.ts`中实现内存缓存系统
+  - [x] 配置Top 100池子列表缓存（5分钟）
+  - [x] 配置池子详情数据缓存（5分钟）
+  - [x] 实现缓存失效和刷新机制
+
+- [x] Agent持仓监控
+  - [x] 在`backend/src/core/data/position-monitor.ts`中实现监控系统
+  - [x] 实现`getAgentPositions()`获取持仓池子地址
+  - [x] 实现`monitorPositionPools()`获取池子详细数据
+  - [x] 实现数据对比和变化检测逻辑
+
+- [x] 数据规范化
+  - [x] 在`shared/src/types/pool.ts`中定义标准化数据接口
+  - [x] 扩展现有的`Pool`和相关接口
+  - [x] 新增`PoolDetail`接口定义
+  - [ ] 在`backend/src/db/models/`下实现数据库模型
+  - [x] 在`backend/src/core/data/transformers.ts`中实现数据转换函数
+
+- [x] 任务调度
+  - [x] 在`backend/src/core/data/scheduler.ts`中实现调度器
+  - [x] 配置Top 100池子列表更新任务（5分钟）
+  - [x] 配置Agent持仓监控任务（5分钟）
+  - [x] 实现错误处理和日志记录
+
+- [x] API端点
+  - [x] 在`backend/src/api/pools`目录下实现接口
+  - [x] 实现`GET /api/pools/recommended`接口
+  - [x] 实现`GET /api/pools/:address`接口
+  - [x] 实现`GET /api/pools/monitored`接口
+
+- [x] 内部接口
+  - [x] 在`backend/src/core/data/index.ts`中导出接口
+  - [x] 实现`getPoolsByAPR()`接口
+  - [x] 实现`getPoolsByVolume()`接口
+  - [x] 实现`getPoolDetail()`接口
+  - [x] 实现`subscribeToPoolChange()`接口
+
+- [x] 技术规范
+  - [x] 实现TypeScript类型系统
+  - [x] 符合项目结构，遵循项目命名规范
+  - [x] 实现错误处理和日志记录
+  - [x] 优化内存缓存使用
+  - [x] 配置参数管理
+
+- [x] 大户流动性监控
+  - [x] 定期轮询关键池子数据（5分钟）
+  - [x] 基于WebHook的事件监听
+  - [x] 大户识别策略实现
+  - [x] 流动性变化分析
+
+- [ ] 🔄 监控配置接口 (延迟到MVP后实现)
+  - [ ] 轮询间隔配置
+  - [ ] 大户阈值配置
+  - [ ] 风险等级阈值配置
+
+- [ ] 🔄 通知机制增强 (部分延迟实现)
+  - [x] 基础日志记录
+  - [x] 系统事件触发
+  - [ ] WebSocket实时推送
+  - [ ] 邮件通知系统
+
+- [ ] 🔄 错误处理增强 (部分延迟实现)
+  - [x] 基本错误捕获
+  - [x] 错误日志记录
+  - [ ] 自定义错误类型
+  - [ ] 错误恢复机制
 
 ### 任务2.3：数据库设计
 - [ ] 表结构设计

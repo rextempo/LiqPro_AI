@@ -1,78 +1,45 @@
 import winston from 'winston';
-import DailyRotateFile from 'winston-daily-rotate-file';
-import { Request } from 'express';
-import { v4 as uuidv4 } from 'uuid';
+import config from '../config';
 
-// 日志级别
-const levels = {
-  error: 0,
-  warn: 1,
-  info: 2,
-  http: 3,
-  debug: 4
-};
-
-// 日志颜色
-const colors = {
-  error: 'red',
-  warn: 'yellow',
-  info: 'green',
-  http: 'magenta',
-  debug: 'white'
-};
-
-// 添加颜色支持
-winston.addColors(colors);
-
-// 日志格式
-const format = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
-  winston.format.colorize({ all: true }),
-  winston.format.printf(
-    (info) => `${info.timestamp} ${info.level}: ${info.message}`
-  )
-);
-
-// 日志输出配置
-const transports = [
-  // 控制台输出
-  new winston.transports.Console(),
-  // 错误日志文件
-  new DailyRotateFile({
-    filename: 'logs/error-%DATE%.log',
-    datePattern: 'YYYY-MM-DD',
-    zippedArchive: true,
-    maxSize: '20m',
-    maxFiles: '14d',
-    level: 'error'
-  }),
-  // 所有日志文件
-  new DailyRotateFile({
-    filename: 'logs/combined-%DATE%.log',
-    datePattern: 'YYYY-MM-DD',
-    zippedArchive: true,
-    maxSize: '20m',
-    maxFiles: '14d'
-  })
-];
-
-// 创建日志实例
 const logger = winston.createLogger({
-  level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
-  levels,
-  format,
-  transports
+  level: config.logLevel || 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      )
+    }),
+    new winston.transports.File({
+      filename: 'logs/error.log',
+      level: 'error'
+    }),
+    new winston.transports.File({
+      filename: 'logs/combined.log'
+    })
+  ]
 });
 
-// 请求日志中间件
-export const requestLogger = (req: Request) => {
-  const requestId = req.headers['x-request-id'] || uuidv4();
-  req.headers['x-request-id'] = requestId;
+export default logger;
 
-  logger.info(
-    `[${requestId}] ${req.method} ${req.url} - ${req.ip} - ${req.get('user-agent')}`
-  );
-};
+export class Logger {
+  info(message: string, ...args: any[]): void {
+    console.log(`[INFO] ${message}`, ...args);
+  }
 
-// 导出日志实例
-export default logger; 
+  error(message: string, ...args: any[]): void {
+    console.error(`[ERROR] ${message}`, ...args);
+  }
+
+  warn(message: string, ...args: any[]): void {
+    console.warn(`[WARN] ${message}`, ...args);
+  }
+
+  debug(message: string, ...args: any[]): void {
+    console.debug(`[DEBUG] ${message}`, ...args);
+  }
+} 
