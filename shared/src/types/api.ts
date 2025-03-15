@@ -2,25 +2,69 @@
  * API错误码
  */
 export enum ApiErrorCode {
-  // 系统错误 (1000-1999)
-  SYSTEM_ERROR = 1000,
-  INVALID_REQUEST = 1001,
-  UNAUTHORIZED = 1002,
-  FORBIDDEN = 1003,
-  NOT_FOUND = 1004,
-  RATE_LIMIT = 1005,
-  
-  // 业务错误 (2000-2999)
-  INVALID_PARAMS = 2000,
-  INSUFFICIENT_BALANCE = 2001,
-  INVALID_POSITION = 2002,
-  PRICE_IMPACT_TOO_HIGH = 2003,
-  SLIPPAGE_TOO_HIGH = 2004,
-  
-  // 网络错误 (3000-3999)
-  NETWORK_ERROR = 3000,
-  TIMEOUT = 3001,
-  SERVICE_UNAVAILABLE = 3002
+  VALIDATION_ERROR = 'VALIDATION_ERROR',
+  NOT_FOUND = 'NOT_FOUND',
+  INTERNAL_ERROR = 'INTERNAL_ERROR',
+  UNAUTHORIZED = 'UNAUTHORIZED',
+  FORBIDDEN = 'FORBIDDEN',
+  BAD_REQUEST = 'BAD_REQUEST'
+}
+
+/**
+ * API错误类
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number,
+    public code: ApiErrorCode
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+/**
+ * API响应接口
+ */
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: {
+    code: ApiErrorCode;
+    message: string;
+  };
+}
+
+/**
+ * 分页参数接口
+ */
+export interface PaginationParams {
+  limit?: number;
+  offset?: number;
+}
+
+/**
+ * 排序参数接口
+ */
+export interface SortParams {
+  sortBy?: string;
+  order?: 'asc' | 'desc';
+}
+
+/**
+ * 池子查询参数接口
+ */
+export interface PoolQueryParams extends PaginationParams, SortParams {
+  minTvl?: number;
+  minVolume?: number;
+}
+
+/**
+ * 监控池子查询参数接口
+ */
+export interface MonitoredPoolQueryParams extends PaginationParams {
+  status?: 'active' | 'inactive' | 'all';
 }
 
 /**
@@ -33,16 +77,6 @@ export interface ApiError {
 }
 
 /**
- * 分页参数
- */
-export interface PaginationParams {
-  page: number;
-  pageSize: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
-
-/**
  * 分页响应
  */
 export interface PaginatedResponse<T> {
@@ -51,15 +85,6 @@ export interface PaginatedResponse<T> {
   page: number;
   pageSize: number;
   totalPages: number;
-}
-
-/**
- * API响应包装器
- */
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: ApiError;
 }
 
 /**
