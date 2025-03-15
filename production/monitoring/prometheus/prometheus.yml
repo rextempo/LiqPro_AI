@@ -1,8 +1,0 @@
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
-
-scrape_configs:
-  - job_name: 'liqpro'
-    static_configs:
-      - targets: ['api-service:3000', 'data-service:3001', 'signal-service:3002', 'scoring-service:3003', 'agent-engine:3004', 'solana-cache:3006']

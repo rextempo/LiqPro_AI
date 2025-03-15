@@ -1,0 +1,11 @@
+# <type>(<scope>): <subject>
+#
+# <body>
+#
+# <footer>
+#
+# type: feat, fix, docs, style, refactor, test, chore
+# scope: agent, pool, api, config, etc.
+# subject: 简短描述，不超过50个字符
+# body: 详细描述，可以分多行
+# footer: 关闭Issue等 

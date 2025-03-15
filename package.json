@@ -1,42 +1,27 @@
 {
   "name": "liqpro",
   "version": "1.0.0",
-  "description": "AI-driven investment platform for Meteora DLMM liquidity pools on Solana",
-  "private": true,
-  "workspaces": [
-    "libs/*",
-    "services/*"
-  ],
+  "description": "LiqPro - A professional liquidity management platform",
+  "main": "dist/index.js",
   "scripts": {
-    "start:dev": "docker-compose up",
-    "start:dev:build": "docker-compose up --build",
-    "stop:dev": "docker-compose down",
-    "build": "npm run build --workspaces",
-    "test": "npm run test --workspaces",
-    "lint": "npm run lint --workspaces",
-    "format": "npm run format --workspaces",
-    "start": "cd production && ./scripts/start.sh",
-    "stop": "cd production && ./scripts/stop.sh",
-    "monitor": "cd production && ./scripts/monitor.sh",
-    "backup": "cd production && ./scripts/backup.sh",
-    "cleanup": "scripts/maintenance/final-cleanup.sh"
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
   },
-  "keywords": [
-    "solana",
-    "meteora",
-    "dlmm",
-    "liquidity",
-    "defi",
-    "ai",
-    "investment"
-  ],
-  "author": "LiqPro Team",
-  "license": "UNLICENSED",
-  "engines": {
-    "node": ">=16.0.0"
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/node": "^18.15.11",
-    "typescript": "^5.0.4"
+    "@types/node": "^20.11.24",
+    "@typescript-eslint/eslint-plugin": "^7.1.1",
+    "@typescript-eslint/parser": "^7.1.1",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
   }
-}
+} 

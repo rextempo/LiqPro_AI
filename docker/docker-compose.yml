@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: builder
+    volumes:
+      - ../backend:/app/backend
+      - ../shared:/app/shared
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+    command: pnpm --filter backend dev
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: builder
+    volumes:
+      - ../frontend:/app/frontend
+      - ../shared:/app/shared
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+    command: pnpm --filter frontend dev
+
+  db:
+    image: postgres:14-alpine
+    environment:
+      - POSTGRES_USER=liqpro
+      - POSTGRES_PASSWORD=liqpro
+      - POSTGRES_DB=liqpro
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data: 
